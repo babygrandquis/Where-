@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Warriors Trade Manager</title>
+<title>Wealth Warriors Smart Recovery Engine</title>
 
 <style>
 body{
@@ -83,7 +83,7 @@ Base Trade
 
 Balance: <b id="bal">$85.00</b><br>
 Next Trade: <b id="trd">$2.80</b><br>
-Recovery Step: <b id="step">0</b>
+Step: <b id="step">0</b>
 
 </div>
 
@@ -131,7 +131,7 @@ let losses = 0;
 let total = 0;
 let log = [];
 
-// ================= EXACT LADDER (LOCKED) =================
+// ================= FIXED LADDER =================
 const ladder = [
 2.80,
 4.35,
@@ -141,14 +141,7 @@ const ladder = [
 22.05
 ];
 
-// ================= UI HELPERS =================
-function get(){
-return {
-startBal: Number(document.getElementById("startBal").value),
-base: Number(document.getElementById("baseTrade").value)
-};
-}
-
+// ================= GET TRADE =================
 function getTrade(){
 return ladder[Math.min(step, ladder.length - 1)];
 }
@@ -182,7 +175,7 @@ html += `
 document.getElementById("table").innerHTML = html;
 }
 
-// ================= WIN =================
+// ================= WIN (STEP BACK) =================
 function win(){
 
 let trade = getTrade();
@@ -192,7 +185,8 @@ balance += ret;
 
 log.push({res:"WIN", trade, ret});
 
-step = 0; // reset recovery
+// move BACK one step (NOT reset)
+step = Math.max(0, step - 1);
 
 wins++;
 total++;
@@ -200,7 +194,7 @@ total++;
 update();
 }
 
-// ================= LOSS =================
+// ================= LOSS (STEP FORWARD) =================
 function loss(){
 
 let trade = getTrade();
@@ -209,7 +203,8 @@ balance -= trade;
 
 log.push({res:"LOSS", trade, ret:0});
 
-step++; // move to next ladder step
+// move forward
+step++;
 
 losses++;
 total++;
@@ -217,7 +212,7 @@ total++;
 update();
 }
 
-// ================= RESET TRADE ONLY =================
+// ================= RESET TRADE =================
 function resetTrade(){
 step = 0;
 update();
@@ -225,13 +220,11 @@ update();
 
 // ================= NEW SESSION (KEEP BALANCE) =================
 function newSession(){
-
 step = 0;
 wins = 0;
 losses = 0;
 total = 0;
 log = [];
-
 update();
 }
 
