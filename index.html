@@ -32,6 +32,7 @@ padding:8px;
 margin-top:5px;
 border-radius:6px;
 border:none;
+font-size:14px;
 }
 
 button{
@@ -61,6 +62,10 @@ border:1px solid #222c44;
 padding:5px;
 text-align:center;
 }
+
+.stats div{
+margin-top:5px;
+}
 </style>
 </head>
 
@@ -80,10 +85,7 @@ Payout %
 <input id="payout" type="number" value="92">
 
 Recovery Multiplier
-<input id="mult" type="number" value="1.55">
-
-Session Target
-<input id="target" type="number" value="100">
+<input id="mult" type="number" value="1.35">
 
 Stop Loss %
 <input id="sl" type="number" value="20">
@@ -123,23 +125,29 @@ Step: <b id="step">0</b>
 
 </div>
 
-<div class="card">
-Stats:
+<div class="card stats">
+
 <div>Total Trades: <span id="total">0</span></div>
 <div>Wins: <span id="wins">0</span></div>
 <div>Losses: <span id="losses">0</span></div>
+
+<br>
+
+Win Rate:
+<progress id="meter" value="0" max="100" style="width:100%"></progress>
+
 </div>
 
 <script>
 
-let balance=85;
-let trade=2.8;
-let step=0;
-let wins=0;
-let losses=0;
-let total=0;
+let balance = 85;
+let trade = 2.8;
+let step = 0;
+let wins = 0;
+let losses = 0;
+let total = 0;
 
-let log=[];
+let log = [];
 
 function get(){
 return {
@@ -147,23 +155,27 @@ startBal:+startBal.value,
 base:+baseTrade.value,
 payout:+payout.value/100,
 mult:+mult.value,
-target:+target.value,
 sl:+sl.value/100
 };
 }
 
 function update(){
 
-bal.innerText="$"+balance.toFixed(2);
-trd.innerText="$"+trade.toFixed(2);
-stepEl.innerText=step;
-totalEl.innerText=total;
-winsEl.innerText=wins;
-lossesEl.innerText=losses;
+bal.innerText = "$" + balance.toFixed(2);
+trd.innerText = "$" + trade.toFixed(2);
+stepEl.innerText = step;
 
-let html="";
+totalEl.innerText = total;
+winsEl.innerText = wins;
+lossesEl.innerText = losses;
+
+let rate = total > 0 ? (wins / total) * 100 : 0;
+meter.value = rate;
+
+let html = "";
+
 log.forEach((x,i)=>{
-html+=`
+html += `
 <tr>
 <td>${i+1}</td>
 <td>${x.res}</td>
@@ -172,19 +184,20 @@ html+=`
 </tr>`;
 });
 
-table.innerHTML=html;
+table.innerHTML = html;
 }
 
 function win(){
-let g=get();
 
-let ret=trade*g.payout;
-balance+=ret;
+let g = get();
 
-log.push({res:"WIN",trade,ret});
+let ret = trade * g.payout;
+balance += ret;
 
-trade=g.base;
-step=0;
+log.push({res:"WIN", trade, ret});
+
+trade = g.base;
+step = 0;
 
 wins++;
 total++;
@@ -194,12 +207,15 @@ check();
 }
 
 function loss(){
-let g=get();
 
-balance-=trade;
-trade*=g.mult;
+let g = get();
 
-log.push({res:"LOSS",trade,ret:0});
+balance -= trade;
+
+// controlled recovery (no martingale doubling)
+trade = trade * g.mult;
+
+log.push({res:"LOSS", trade:trade, ret:0});
 
 step++;
 losses++;
@@ -210,36 +226,45 @@ check();
 }
 
 function resetTrade(){
-let g=get();
-trade=g.base;
-step=0;
+let g = get();
+
+trade = g.base;
+step = 0;
+
 update();
 }
 
 function newSession(){
-let g=get();
 
-balance=g.startBal;
-trade=g.base;
-step=0;
-wins=0;
-losses=0;
-total=0;
-log=[];
+// KEEP BALANCE (no reset anymore)
+let g = get();
+
+trade = g.base;
+step = 0;
+
+wins = 0;
+losses = 0;
+total = 0;
+log = [];
 
 update();
 }
 
 function check(){
-let g=get();
 
-if(balance>=g.target){
-alert("SESSION TARGET HIT");
+let g = get();
+
+let target = g.startBal * 1.09;
+let stop = g.startBal * (1 - g.sl);
+
+if(balance >= target){
+alert("🎯 +9% SESSION TARGET HIT");
 }
 
-if(balance<=g.startBal*(1-g.sl)){
-alert("STOP LOSS HIT");
+if(balance <= stop){
+alert("🛑 STOP LOSS HIT");
 }
+
 }
 
 update();
