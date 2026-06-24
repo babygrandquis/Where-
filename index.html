@@ -1,129 +1,250 @@
-#   
-<!DOCTYPE html>  
-<html>  
-<head>  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<title>Wealth Warriors Pro</title>  
-  
-<link rel="manifest" href="manifest.json">  
-  
-<style>  
-body{  
-margin:0;  
-font-family:Arial;  
-background:#0b1220;  
-color:white;  
-}  
-  
-.header{  
-background:#123a7a;  
-padding:15px;  
-text-align:center;  
-font-weight:bold;  
-}  
-  
-.card{  
-background:#111a2e;  
-margin:10px;  
-padding:12px;  
-border-radius:10px;  
-}  
-  
-button{  
-width:100%;  
-padding:12px;  
-margin-top:8px;  
-border:none;  
-border-radius:8px;  
-font-weight:bold;  
-cursor:pointer;  
-}  
-  
-.win{background:#39d353;}  
-.loss{background:#dc2626;color:white;}  
-.reset{background:#f59e0b;}  
-.new{background:#2563eb;color:white;}  
-</style>  
-</head>  
-  
-<body>  
-  
-<div class="header">WEALTH WARRIORS PRO</div>  
-  
-<div class="card">  
-Balance: <h2 id="bal">$85.00</h2>  
-Next Trade: <h2 id="trd">$2.80</h2>  
-Recovery Step: <span id="step">0</span>  
-</div>  
-  
-<div class="card">  
-<button class="win" onclick="win()">WIN</button>  
-<button class="loss" onclick="loss()">LOSS</button>  
-<button class="reset" onclick="reset()">RESET</button>  
-<button class="new" onclick="newSession()">NEW SESSION</button>  
-</div>  
-  
-<div class="card">  
-Stats:  
-<div>Total Trades: <span id="total">0</span></div>  
-<div>Wins: <span id="wins">0</span></div>  
-<div>Losses: <span id="losses">0</span></div>  
-</div>  
-  
-<script>  
-  
-let balance=85;  
-let trade=2.8;  
-let step=0;  
-let wins=0;  
-let losses=0;  
-let total=0;  
-  
-function update(){  
-document.getElementById("bal").innerText="$"+balance.toFixed(2);  
-document.getElementById("trd").innerText="$"+trade.toFixed(2);  
-document.getElementById("step").innerText=step;  
-document.getElementById("wins").innerText=wins;  
-document.getElementById("losses").innerText=losses;  
-document.getElementById("total").innerText=total;  
-}  
-  
-function win(){  
-balance += trade*0.92;  
-trade = 2.8;  
-step = 0;  
-wins++;  
-total++;  
-update();  
-}  
-  
-function loss(){  
-balance -= trade;  
-trade *= 1.55;  
-step++;  
-losses++;  
-total++;  
-update();  
-}  
-  
-function reset(){  
-trade=2.8;  
-step=0;  
-update();  
-}  
-  
-function newSession(){  
-balance=85;  
-trade=2.8;  
-step=0;  
-wins=0;  
-losses=0;  
-total=0;  
-update();  
-}  
-  
-update();  
-</script>  
-  
-</body>  
-</html>  
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wealth Warriors Trade Manager</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#0b1220;
+color:white;
+}
+
+.header{
+background:#123a7a;
+padding:14px;
+text-align:center;
+font-weight:bold;
+}
+
+.card{
+background:#111a2e;
+margin:10px;
+padding:12px;
+border-radius:10px;
+}
+
+input{
+width:100%;
+padding:8px;
+margin-top:5px;
+border-radius:6px;
+border:none;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:6px;
+border:none;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.win{background:#39d353;}
+.loss{background:#dc2626;color:white;}
+.reset{background:#f59e0b;}
+.new{background:#2563eb;color:white;}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+font-size:12px;
+}
+
+th,td{
+border:1px solid #222c44;
+padding:5px;
+text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">WEALTH WARRIORS TRADE MANAGER</div>
+
+<div class="card">
+
+Starting Balance
+<input id="startBal" type="number" value="85">
+
+Base Trade
+<input id="baseTrade" type="number" value="2.8">
+
+Payout %
+<input id="payout" type="number" value="92">
+
+Recovery Multiplier
+<input id="mult" type="number" value="1.55">
+
+Session Target
+<input id="target" type="number" value="100">
+
+Stop Loss %
+<input id="sl" type="number" value="20">
+
+</div>
+
+<div class="card">
+
+Balance: <b id="bal">$85.00</b><br>
+Next Trade: <b id="trd">$2.80</b><br>
+Step: <b id="step">0</b>
+
+</div>
+
+<div class="card">
+
+<button class="win" onclick="win()">WIN</button>
+<button class="loss" onclick="loss()">LOSS</button>
+<button class="reset" onclick="resetTrade()">RESET TRADE</button>
+<button class="new" onclick="newSession()">NEW SESSION</button>
+
+</div>
+
+<div class="card">
+
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Result</th>
+<th>Trade</th>
+<th>Return</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+</div>
+
+<div class="card">
+Stats:
+<div>Total Trades: <span id="total">0</span></div>
+<div>Wins: <span id="wins">0</span></div>
+<div>Losses: <span id="losses">0</span></div>
+</div>
+
+<script>
+
+let balance=85;
+let trade=2.8;
+let step=0;
+let wins=0;
+let losses=0;
+let total=0;
+
+let log=[];
+
+function get(){
+return {
+startBal:+startBal.value,
+base:+baseTrade.value,
+payout:+payout.value/100,
+mult:+mult.value,
+target:+target.value,
+sl:+sl.value/100
+};
+}
+
+function update(){
+
+bal.innerText="$"+balance.toFixed(2);
+trd.innerText="$"+trade.toFixed(2);
+stepEl.innerText=step;
+totalEl.innerText=total;
+winsEl.innerText=wins;
+lossesEl.innerText=losses;
+
+let html="";
+log.forEach((x,i)=>{
+html+=`
+<tr>
+<td>${i+1}</td>
+<td>${x.res}</td>
+<td>$${x.trade.toFixed(2)}</td>
+<td>$${x.ret.toFixed(2)}</td>
+</tr>`;
+});
+
+table.innerHTML=html;
+}
+
+function win(){
+let g=get();
+
+let ret=trade*g.payout;
+balance+=ret;
+
+log.push({res:"WIN",trade,ret});
+
+trade=g.base;
+step=0;
+
+wins++;
+total++;
+
+update();
+check();
+}
+
+function loss(){
+let g=get();
+
+balance-=trade;
+trade*=g.mult;
+
+log.push({res:"LOSS",trade,ret:0});
+
+step++;
+losses++;
+total++;
+
+update();
+check();
+}
+
+function resetTrade(){
+let g=get();
+trade=g.base;
+step=0;
+update();
+}
+
+function newSession(){
+let g=get();
+
+balance=g.startBal;
+trade=g.base;
+step=0;
+wins=0;
+losses=0;
+total=0;
+log=[];
+
+update();
+}
+
+function check(){
+let g=get();
+
+if(balance>=g.target){
+alert("SESSION TARGET HIT");
+}
+
+if(balance<=g.startBal*(1-g.sl)){
+alert("STOP LOSS HIT");
+}
+}
+
+update();
+
+</script>
+
+</body>
+</html>
