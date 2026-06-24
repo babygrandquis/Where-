@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Warriors Smart Recovery Engine</title>
+<title>Wealth Warriors Trade Manager</title>
 
 <style>
 body{
@@ -33,6 +33,7 @@ margin-top:5px;
 border-radius:6px;
 border:none;
 font-size:14px;
+color:black;
 }
 
 button{
@@ -49,6 +50,7 @@ cursor:pointer;
 .loss{background:#dc2626;color:white;}
 .reset{background:#f59e0b;}
 .new{background:#2563eb;color:white;}
+.apply{background:#8b5cf6;color:white;}
 
 table{
 width:100%;
@@ -77,12 +79,14 @@ Starting Balance
 Base Trade
 <input id="baseTrade" type="number" value="2.8">
 
+<button class="apply" onclick="applyStartBalance()">APPLY START BALANCE</button>
+
 </div>
 
 <div class="card">
 
-Balance: <b id="bal">$85.00</b><br>
-Next Trade: <b id="trd">$2.80</b><br>
+Balance: <b id="bal">$0.00</b><br>
+Next Trade: <b id="trd">$0.00</b><br>
 Step: <b id="step">0</b>
 
 </div>
@@ -124,7 +128,7 @@ Step: <b id="step">0</b>
 <script>
 
 // ================= STATE =================
-let balance = 85;
+let balance = 0;
 let step = 0;
 let wins = 0;
 let losses = 0;
@@ -141,7 +145,13 @@ const ladder = [
 22.05
 ];
 
-// ================= GET TRADE =================
+// ================= APPLY START BALANCE =================
+function applyStartBalance(){
+balance = Number(document.getElementById("startBal").value);
+update();
+}
+
+// ================= TRADE =================
 function getTrade(){
 return ladder[Math.min(step, ladder.length - 1)];
 }
@@ -185,7 +195,6 @@ balance += ret;
 
 log.push({res:"WIN", trade, ret});
 
-// move BACK one step (NOT reset)
 step = Math.max(0, step - 1);
 
 wins++;
@@ -203,7 +212,6 @@ balance -= trade;
 
 log.push({res:"LOSS", trade, ret:0});
 
-// move forward
 step++;
 
 losses++;
@@ -229,7 +237,7 @@ update();
 }
 
 // ================= INIT =================
-update();
+applyStartBalance();
 
 </script>
 
