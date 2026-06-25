@@ -2,39 +2,103 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Extended Recovery System</title>
+<title>Wealth Warriors Trade Manager</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#0b1220;color:white}
-.header{background:#123a7a;padding:14px;text-align:center;font-weight:bold}
-.card{background:#111a2e;margin:10px;padding:12px;border-radius:10px}
-button{width:100%;padding:10px;margin-top:6px;border:none;border-radius:6px;font-weight:bold;cursor:pointer}
-.win{background:#39d353}
-.loss{background:#dc2626;color:white}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
-th,td{border:1px solid #222c44;padding:5px;text-align:center}
+body{
+margin:0;
+font-family:Arial;
+background:#0b1220;
+color:white;
+}
+
+.header{
+background:#123a7a;
+padding:14px;
+text-align:center;
+font-weight:bold;
+}
+
+.card{
+background:#111a2e;
+margin:10px;
+padding:12px;
+border-radius:10px;
+}
+
+input{
+width:100%;
+padding:8px;
+margin-top:5px;
+border-radius:6px;
+border:none;
+font-size:14px;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:6px;
+border:none;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.win{background:#39d353;}
+.loss{background:#dc2626;color:white;}
+.apply{background:#2563eb;color:white;}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+font-size:12px;
+}
+
+th,td{
+border:1px solid #222c44;
+padding:5px;
+text-align:center;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">EXTENDED RECOVERY SYSTEM (5+ LOSS MODE)</div>
+<div class="header">WEALTH WARRIORS TRADE MANAGER</div>
 
+<!-- SETTINGS -->
 <div class="card">
-Balance: <b id="bal"></b><br>
-Trade: <b id="trd"></b><br>
-Loss Streak: <b id="loss"></b>
+Starting Balance
+<input id="balInput" type="number" value="85">
+
+Base Trade
+<input id="tradeInput" type="number" value="2.64">
+
+<button class="apply" onclick="applySettings()">APPLY SETTINGS</button>
 </div>
 
+<!-- STATUS -->
+<div class="card">
+Balance: <b id="balance">$0.00</b><br>
+Current Trade: <b id="trade">$0.00</b><br>
+Loss Streak: <b id="lossStreak">0</b><br>
+Mode: <b id="mode">NORMAL</b>
+</div>
+
+<!-- ACTIONS -->
 <div class="card">
 <button class="win" onclick="win()">WIN</button>
 <button class="loss" onclick="loss()">LOSS</button>
 </div>
 
+<!-- LOG -->
+<div class="card">
 <table>
 <thead>
 <tr>
-<th>No</th>
+<th>#</th>
 <th>Result</th>
 <th>Trade</th>
 <th>Return</th>
@@ -42,41 +106,83 @@ Loss Streak: <b id="loss"></b>
 </thead>
 <tbody id="log"></tbody>
 </table>
+</div>
 
 <script>
 
+// ================= STATE =================
 let balance = 85;
+let base = 2.64;
+
 let step = 0;
 let lossStreak = 0;
 
+let normal = [];
+let extended = [];
+
 let log = [];
+let count = 0;
 
-// TWO SYSTEMS
-let normal = [2.64,4.09,6.18,9.24];
-let extended = [13.86,20.78];
+// ================= APPLY SETTINGS =================
+function applySettings(){
 
+balance = Number(document.getElementById("balInput").value);
+base = Number(document.getElementById("tradeInput").value);
+
+// NORMAL MODE (0–4 losses)
+normal = [
+base,
+base * 1.55,
+base * 2.34,
+base * 3.5,
+base * 5.25
+];
+
+// EXTENDED MODE (5+ losses)
+extended = [
+base * 7.87,
+base * 10.5
+];
+
+step = 0;
+lossStreak = 0;
+log = [];
+count = 0;
+
+update();
+}
+
+// ================= GET TRADE =================
 function getTrade(){
+
 if(lossStreak >= 5){
-return extended[Math.min(step, extended.length-1)];
-}
-return normal[Math.min(step, normal.length-1)];
+return extended[Math.min(step, extended.length - 1)];
 }
 
-// LOSS
+return normal[Math.min(step, normal.length - 1)];
+}
+
+// ================= LOSS =================
 function loss(){
 
 let t = getTrade();
 balance -= t;
 
-log.push({r:"LOSS",t:t,ret:0});
-
 lossStreak++;
 step++;
+
+log.push({
+r:"LOSS",
+t:t,
+ret:0
+});
+
+count++;
 
 update();
 }
 
-// WIN
+// ================= WIN =================
 function win(){
 
 let t = getTrade();
@@ -84,31 +190,42 @@ let ret = t * 0.92;
 
 balance += ret;
 
-log.push({r:"WIN",t:t,ret:ret});
+log.push({
+r:"WIN",
+t:t,
+ret:ret
+});
 
-// move down ladder
-step = Math.max(0, step - 1);
+count++;
 
-// reset after recovery
-if(lossStreak >= 5){
-if(step === 0){
-lossStreak = 0;
+// MOVE DOWN STEP
+if(step > 0){
+step--;
 }
+
+// ENTER EXTENDED MODE AFTER 5 LOSSES
+if(lossStreak >= 5 && step === 0){
+lossStreak = 0;
 }
 
 update();
 }
 
-// UPDATE
+// ================= UPDATE UI =================
 function update(){
 
-document.getElementById("bal").innerText="$"+balance.toFixed(2);
-document.getElementById("trd").innerText="$"+getTrade().toFixed(2);
-document.getElementById("loss").innerText=lossStreak;
+document.getElementById("balance").innerText = "$" + balance.toFixed(2);
+document.getElementById("trade").innerText = "$" + getTrade().toFixed(2);
+document.getElementById("lossStreak").innerText = lossStreak;
 
-let html="";
+document.getElementById("mode").innerText =
+(lossStreak >= 5 ? "EXTENDED RECOVERY" : "NORMAL");
+
+let html = "";
+
 log.forEach((x,i)=>{
-html+=`<tr>
+html += `
+<tr>
 <td>${i+1}</td>
 <td>${x.r}</td>
 <td>$${x.t.toFixed(2)}</td>
@@ -116,7 +233,7 @@ html+=`<tr>
 </tr>`;
 });
 
-document.getElementById("log").innerHTML=html;
+document.getElementById("log").innerHTML = html;
 }
 
 update();
