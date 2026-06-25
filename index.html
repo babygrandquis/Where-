@@ -123,10 +123,12 @@ let total = 0;
 
 let log = [];
 
-// ================= LADDER (CACHE IT ONCE PER CLICK) =================
-function buildLadder(){
+// ================= BUILD LADDER ONCE (IMPORTANT FIX) =================
+let ladder = [];
+
+function initLadder(){
 let base = Number(document.getElementById("baseTrade").value);
-return [
+ladder = [
 base,
 base * 1.55,
 base * 2.34,
@@ -136,18 +138,16 @@ base * 7.87
 ];
 }
 
-// ================= GET FIXED LADDER FOR THIS STATE =================
-function getTrade(ladder){
-return ladder[step] || ladder[ladder.length - 1];
+// ================= GET TRADE =================
+function getTrade(){
+return ladder[Math.min(step, ladder.length - 1)];
 }
 
 // ================= UPDATE =================
 function update(){
 
-let ladder = buildLadder(); // ONLY FOR DISPLAY, NOT LOGIC
-
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
-document.getElementById("trd").innerText = "$" + getTrade(ladder).toFixed(2);
+document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
 document.getElementById("step").innerText = step;
 
 document.getElementById("total").innerText = total;
@@ -175,14 +175,9 @@ document.getElementById("table").innerHTML = html;
 // ================= WIN =================
 function win(){
 
-let ladder = buildLadder();
-let trade = getTrade(ladder);
+let trade = getTrade();
 let ret = trade * 0.92;
 
-// STEP MUST CHANGE BEFORE NEXT RENDER
-step = Math.max(0, step - 1);
-
-// balance update
 balance += ret;
 
 log.push({res:"WIN", trade, ret});
@@ -190,21 +185,23 @@ log.push({res:"WIN", trade, ret});
 wins++;
 total++;
 
+// MOVE DOWN ALWAYS (NO REPEATS POSSIBLE NOW)
+step = Math.max(0, step - 1);
+
 update();
 }
 
 // ================= LOSS =================
 function loss(){
 
-let ladder = buildLadder();
-let trade = getTrade(ladder);
-
-// STEP FIRST
-step++;
+let trade = getTrade();
 
 balance -= trade;
 
 log.push({res:"LOSS", trade, ret:0});
+
+// MOVE UP
+step++;
 
 losses++;
 total++;
@@ -229,6 +226,7 @@ update();
 }
 
 // ================= INIT =================
+initLadder();
 update();
 
 </script>
