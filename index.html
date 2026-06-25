@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Warriors Exact Ladder</title>
+<title>Wealth Ladder System</title>
 
 <style>
 body{
@@ -65,12 +65,15 @@ text-align:center;
 
 <body>
 
-<div class="header">WEALTH WARRIORS TRADE MANAGER</div>
+<div class="header">WEALTH WARRIORS LADDER SYSTEM</div>
 
 <div class="card">
 
 Starting Balance
 <input id="startBal" type="number" value="85">
+
+Base Trade
+<input id="baseTrade" type="number" value="2.8">
 
 <button onclick="apply()">APPLY</button>
 
@@ -104,29 +107,35 @@ Step: <b id="step"></b>
 // ================= STATE =================
 let balance = 0;
 let step = 0;
-let history = [];
+let base = 2.8;
 
-// ================= FIXED LADDER =================
-const ladder = [
-2.80,
-4.34,
-6.55,
-9.80,
-14.70,
-22.04
-];
+let ladder = [];
+let history = [];
 
 // ================= APPLY =================
 function apply(){
+
+base = Number(document.getElementById("baseTrade").value);
 balance = Number(document.getElementById("startBal").value);
+
+ladder = [
+base,
+base * 1.55,
+base * 2.34,
+base * 3.5,
+base * 5.25,
+base * 7.87
+];
+
 step = 0;
 history = [];
+
 update();
 }
 
-// ================= TRADE =================
+// ================= GET TRADE =================
 function trade(){
-return ladder[step];
+return ladder[Math.min(step, ladder.length - 1)];
 }
 
 // ================= LOSS =================
