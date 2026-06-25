@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Warriors Curve Engine</title>
+<title>Locked Recovery System</title>
 
 <style>
 body{
@@ -48,8 +48,6 @@ cursor:pointer;
 .win{background:#39d353;}
 .loss{background:#dc2626;color:white;}
 .apply{background:#16a34a;color:white;}
-.reset{background:#f59e0b;}
-.new{background:#2563eb;color:white;}
 
 table{
 width:100%;
@@ -68,7 +66,7 @@ text-align:center;
 
 <body>
 
-<div class="header">WEALTH WARRIORS CURVE RECOVERY ENGINE</div>
+<div class="header">LOCKED RECOVERY SYSTEM</div>
 
 <div class="card">
 
@@ -85,14 +83,12 @@ Base Trade
 <div class="card">
 Balance: <b id="bal">$0.00</b><br>
 Next Trade: <b id="trd">$0.00</b><br>
-Level: <b id="step">0</b>
+Win Cycle: <b id="cycle">0</b>
 </div>
 
 <div class="card">
 <button class="win" onclick="win()">WIN</button>
 <button class="loss" onclick="loss()">LOSS</button>
-<button class="reset" onclick="resetTrade()">RESET</button>
-<button class="new" onclick="newSession()">NEW SESSION</button>
 </div>
 
 <div class="card">
@@ -109,25 +105,16 @@ Level: <b id="step">0</b>
 </table>
 </div>
 
-<div class="card">
-<div>Total Trades: <span id="total">0</span></div>
-<div>Wins: <span id="wins">0</span></div>
-<div>Losses: <span id="losses">0</span></div>
-<div>Win Rate: <span id="rate">0%</span></div>
-</div>
-
 <script>
 
 // ================= STATE =================
 let balance = 0;
 let step = 0;
-
-let wins = 0;
-let losses = 0;
-let total = 0;
+let cycle = 0;
 
 let ladder = [];
 let log = [];
+let total = 0;
 
 // ================= APPLY SETTINGS =================
 function applySettings(){
@@ -135,17 +122,18 @@ function applySettings(){
 let base = Number(document.getElementById("baseTrade").value);
 balance = Number(document.getElementById("startBal").value);
 
-// CURVE EXPANSION LADDER (LOSS SIDE)
+// YOUR EXACT LADDER
 ladder = [
 base,                 // 2.80
 base * 1.55,         // 4.34
 base * 2.34,         // 6.55
 base * 3.5,          // 9.80
 base * 5.25,         // 14.70
-base * 7.87          // 22.04
+base * 7.87          // 22.05
 ];
 
 step = 0;
+cycle = 0;
 
 update();
 }
@@ -155,24 +143,24 @@ function getTrade(){
 return ladder[Math.min(step, ladder.length - 1)];
 }
 
-// ================= LOSS (EXPAND UP CURVE) =================
+// ================= LOSS =================
 function loss(){
+
+let trade = getTrade();
+balance -= trade;
 
 step = Math.min(step + 1, ladder.length - 1);
 
-let trade = getTrade();
-
-balance -= trade;
-
-losses++;
-total++;
+// reset win cycle on loss
+cycle = 0;
 
 log.push({res:"LOSS", trade, ret:0});
+total++;
 
 update();
 }
 
-// ================= WIN (CONTRACT DOWN CURVE) =================
+// ================= WIN =================
 function win(){
 
 let trade = getTrade();
@@ -180,14 +168,15 @@ let ret = trade * 0.92;
 
 balance += ret;
 
-wins++;
-total++;
+cycle++;
 
 log.push({res:"WIN", trade, ret});
+total++;
 
-// 🔥 CONTRACT LOGIC (FAST RECOVERY)
-if(step >= ladder.length - 1){
-step = step - 2;
+// 🔥 CORE RULE: 3RD WIN ALWAYS RESET
+if(cycle >= 3){
+step = 0;        // reset to base trade
+cycle = 0;
 } else {
 step = Math.max(0, step - 1);
 }
@@ -195,35 +184,12 @@ step = Math.max(0, step - 1);
 update();
 }
 
-// ================= RESET =================
-function resetTrade(){
-step = 0;
-update();
-}
-
-// ================= NEW SESSION =================
-function newSession(){
-step = 0;
-wins = 0;
-losses = 0;
-total = 0;
-log = [];
-update();
-}
-
-// ================= UPDATE UI =================
+// ================= UPDATE =================
 function update(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
-document.getElementById("step").innerText = step;
-
-document.getElementById("total").innerText = total;
-document.getElementById("wins").innerText = wins;
-document.getElementById("losses").innerText = losses;
-
-let rate = total > 0 ? (wins / total) * 100 : 0;
-document.getElementById("rate").innerText = rate.toFixed(1) + "%";
+document.getElementById("cycle").innerText = cycle;
 
 let html = "";
 
