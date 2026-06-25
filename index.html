@@ -70,36 +70,28 @@ text-align:center;
 <div class="header">WEALTH WARRIORS TRADE MANAGER</div>
 
 <div class="card">
-
 Starting Balance
 <input id="startBal" type="number" value="85">
 
 Base Trade
 <input id="baseTrade" type="number" value="2.8">
-
 </div>
 
 <div class="card">
-
 Balance: <b id="bal">$0.00</b><br>
 Next Trade: <b id="trd">$0.00</b><br>
 Step: <b id="step">0</b><br>
-Mode: <b id="mode">NORMAL</b><br>
 Loss Streak: <b id="streak">0</b>
-
 </div>
 
 <div class="card">
-
 <button class="win" onclick="win()">WIN</button>
 <button class="loss" onclick="loss()">LOSS</button>
 <button class="reset" onclick="resetTrade()">RESET</button>
 <button class="new" onclick="newSession()">NEW SESSION</button>
-
 </div>
 
 <div class="card">
-
 <table>
 <thead>
 <tr>
@@ -111,16 +103,13 @@ Loss Streak: <b id="streak">0</b>
 </thead>
 <tbody id="table"></tbody>
 </table>
-
 </div>
 
 <div class="card">
-
 <div>Total Trades: <span id="total">0</span></div>
 <div>Wins: <span id="wins">0</span></div>
 <div>Losses: <span id="losses">0</span></div>
 <div>Win Rate: <span id="rate">0%</span></div>
-
 </div>
 
 <script>
@@ -134,7 +123,7 @@ let total = 0;
 let lossStreak = 0;
 let log = [];
 
-// ================= BUILD LADDER FROM BASE TRADE =================
+// ================= LADDER =================
 function getLadder(){
 let base = Number(document.getElementById("baseTrade").value);
 return [
@@ -147,26 +136,20 @@ base * 7.87
 ];
 }
 
-// ================= HELPERS =================
 function getTrade(){
 let ladder = getLadder();
 return ladder[Math.min(step, ladder.length - 1)];
 }
 
-function isRecoveryMode(){
-return lossStreak >= 3;
-}
-
 // ================= UPDATE =================
 function update(){
 
-balance = Number(document.getElementById("startBal").value);
+// IMPORTANT FIX:
+// balance is NOT overwritten anymore
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
 document.getElementById("step").innerText = step;
-
-document.getElementById("mode").innerText = isRecoveryMode() ? "RECOVERY" : "NORMAL";
 document.getElementById("streak").innerText = lossStreak;
 
 document.getElementById("total").innerText = total;
@@ -197,15 +180,18 @@ function win(){
 let trade = getTrade();
 let ret = trade * 0.92;
 
+balance += ret;
+
 log.push({res:"WIN", trade, ret});
 
-// recovery logic
-if(isRecoveryMode()){
+// recovery rule (FIXED)
+if(lossStreak >= 3){
 step = Math.max(0, step - 2);
 } else {
 step = Math.max(0, step - 1);
 }
 
+// reset streak
 lossStreak = 0;
 
 wins++;
@@ -218,6 +204,8 @@ update();
 function loss(){
 
 let trade = getTrade();
+
+balance -= trade;
 
 log.push({res:"LOSS", trade, ret:0});
 
@@ -238,7 +226,7 @@ lossStreak = 0;
 update();
 }
 
-// ================= NEW SESSION (KEEP BALANCE) =================
+// ================= NEW SESSION =================
 function newSession(){
 step = 0;
 lossStreak = 0;
@@ -250,6 +238,7 @@ update();
 }
 
 // ================= INIT =================
+balance = Number(document.getElementById("startBal").value);
 update();
 
 </script>
