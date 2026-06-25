@@ -1,8 +1,8 @@
-<!DOCTYPE<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Warriors Trade Manager (V2)</title>
+<title>Wealth Warriors Recovery Engine</title>
 
 <style>
 body{
@@ -68,7 +68,7 @@ text-align:center;
 
 <body>
 
-<div class="header">WEALTH WARRIORS TRADE MANAGER (VERSION B v2)</div>
+<div class="header">WEALTH WARRIORS RECOVERY ENGINE</div>
 
 <div class="card">
 
@@ -85,13 +85,13 @@ Base Trade
 <div class="card">
 Balance: <b id="bal">$0.00</b><br>
 Next Trade: <b id="trd">$0.00</b><br>
-Step: <b id="step">0</b>
+Index: <b id="idx">0</b>
 </div>
 
 <div class="card">
 <button class="win" onclick="win()">WIN</button>
 <button class="loss" onclick="loss()">LOSS</button>
-<button class="reset" onclick="resetTrade()">RESET</button>
+<button class="reset" onclick="reset()">RESET</button>
 <button class="new" onclick="newSession()">NEW SESSION</button>
 </div>
 
@@ -109,18 +109,11 @@ Step: <b id="step">0</b>
 </table>
 </div>
 
-<div class="card">
-<div>Total Trades: <span id="total">0</span></div>
-<div>Wins: <span id="wins">0</span></div>
-<div>Losses: <span id="losses">0</span></div>
-<div>Win Rate: <span id="rate">0%</span></div>
-</div>
-
 <script>
 
 // ================= STATE =================
 let balance = 0;
-let step = 0;
+let index = 0;
 
 let wins = 0;
 let losses = 0;
@@ -129,35 +122,53 @@ let total = 0;
 let ladder = [];
 let log = [];
 
-// ================= APPLY SETTINGS =================
+// ================= APPLY =================
 function applySettings(){
 
-let startBal = Number(document.getElementById("startBal").value);
+let start = Number(document.getElementById("startBal").value);
 let base = Number(document.getElementById("baseTrade").value);
 
-balance = startBal;
+balance = start;
 
-// LOCK LADDER ONCE
+// FULL LADDER (EXTENDED RECOVERY ENGINE)
 ladder = [
 base,
 base * 1.55,
 base * 2.34,
 base * 3.5,
 base * 5.25,
-base * 7.87
+base * 7.87,
+base * 9.8
 ];
 
-step = 0;
+index = 0;
 
 update();
 }
 
-// ================= GET TRADE =================
+// ================= TRADE =================
 function getTrade(){
-return ladder[Math.min(step, ladder.length - 1)];
+return ladder[Math.min(index, ladder.length - 1)];
 }
 
-// ================= WIN (CONTROLLED FAST RECOVERY) =================
+// ================= LOSS =================
+function loss(){
+
+let trade = getTrade();
+
+balance -= trade;
+
+index = Math.min(index + 1, ladder.length - 1);
+
+losses++;
+total++;
+
+log.push({res:"LOSS", trade, ret:0});
+
+update();
+}
+
+// ================= WIN (SMART RECOVERY MAP) =================
 function win(){
 
 let trade = getTrade();
@@ -170,43 +181,30 @@ total++;
 
 log.push({res:"WIN", trade, ret});
 
-// 🔥 VERSION B v2 RULE
-// Only fast jump if deep in recovery (step >= 4)
-if(step >= 4){
-step = Math.max(0, step - 2);
-} else {
-step = Math.max(0, step - 1);
+// 🔥 RECOVERY ENGINE LOGIC
+
+if(index >= 6){
+index = Math.max(0, index - 2);   // deep recovery
 }
-
-update();
+else if(index >= 3){
+index = Math.max(0, index - 2);   // mid recovery
 }
-
-// ================= LOSS =================
-function loss(){
-
-let trade = getTrade();
-
-balance -= trade;
-
-losses++;
-total++;
-
-log.push({res:"LOSS", trade, ret:0});
-
-step++;
+else{
+index = Math.max(0, index - 1);   // normal recovery
+}
 
 update();
 }
 
 // ================= RESET =================
-function resetTrade(){
-step = 0;
+function reset(){
+index = 0;
 update();
 }
 
 // ================= NEW SESSION =================
 function newSession(){
-step = 0;
+index = 0;
 wins = 0;
 losses = 0;
 total = 0;
@@ -219,14 +217,7 @@ function update(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
-document.getElementById("step").innerText = step;
-
-document.getElementById("total").innerText = total;
-document.getElementById("wins").innerText = wins;
-document.getElementById("losses").innerText = losses;
-
-let rate = total > 0 ? (wins / total) * 100 : 0;
-document.getElementById("rate").innerText = rate.toFixed(1) + "%";
+document.getElementById("idx").innerText = index;
 
 let html = "";
 
