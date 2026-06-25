@@ -33,7 +33,6 @@ margin-top:5px;
 border-radius:6px;
 border:none;
 font-size:14px;
-color:black;
 }
 
 button{
@@ -81,8 +80,7 @@ Base Trade
 <div class="card">
 Balance: <b id="bal">$0.00</b><br>
 Next Trade: <b id="trd">$0.00</b><br>
-Step: <b id="step">0</b><br>
-Mode: <b id="mode">NORMAL</b>
+Step: <b id="step">0</b>
 </div>
 
 <div class="card">
@@ -123,13 +121,10 @@ let wins = 0;
 let losses = 0;
 let total = 0;
 
-let recoveryMode = false;
-let stabilizeWin = false;
-
 let log = [];
 
-// ================= LADDER =================
-function getLadder(){
+// ================= LADDER (CACHE IT ONCE PER CLICK) =================
+function buildLadder(){
 let base = Number(document.getElementById("baseTrade").value);
 return [
 base,
@@ -141,18 +136,19 @@ base * 7.87
 ];
 }
 
-function getTrade(){
-let ladder = getLadder();
-return ladder[Math.min(step, ladder.length - 1)];
+// ================= GET FIXED LADDER FOR THIS STATE =================
+function getTrade(ladder){
+return ladder[step] || ladder[ladder.length - 1];
 }
 
 // ================= UPDATE =================
 function update(){
 
+let ladder = buildLadder(); // ONLY FOR DISPLAY, NOT LOGIC
+
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
-document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
+document.getElementById("trd").innerText = "$" + getTrade(ladder).toFixed(2);
 document.getElementById("step").innerText = step;
-document.getElementById("mode").innerText = recoveryMode ? "RECOVERY" : "NORMAL";
 
 document.getElementById("total").innerText = total;
 document.getElementById("wins").innerText = wins;
@@ -179,9 +175,14 @@ document.getElementById("table").innerHTML = html;
 // ================= WIN =================
 function win(){
 
-let trade = getTrade();
+let ladder = buildLadder();
+let trade = getTrade(ladder);
 let ret = trade * 0.92;
 
+// STEP MUST CHANGE BEFORE NEXT RENDER
+step = Math.max(0, step - 1);
+
+// balance update
 balance += ret;
 
 log.push({res:"WIN", trade, ret});
@@ -189,48 +190,21 @@ log.push({res:"WIN", trade, ret});
 wins++;
 total++;
 
-// detect recovery mode
-if(step >= 3){
-recoveryMode = true;
-}
-
-// WIN LOGIC
-if(recoveryMode){
-
-// step down first
-step = Math.max(0, step - 1);
-
-// if reached base level
-if(step === 0){
-stabilizeWin = true;
-}
-
-if(stabilizeWin && step === 0){
-recoveryMode = false;
-stabilizeWin = false;
-}
-
-} else {
-step = Math.max(0, step - 1);
-}
-
 update();
 }
 
 // ================= LOSS =================
 function loss(){
 
-let trade = getTrade();
+let ladder = buildLadder();
+let trade = getTrade(ladder);
+
+// STEP FIRST
+step++;
 
 balance -= trade;
 
 log.push({res:"LOSS", trade, ret:0});
-
-step++;
-
-if(step >= 3){
-recoveryMode = true;
-}
 
 losses++;
 total++;
@@ -241,17 +215,12 @@ update();
 // ================= RESET =================
 function resetTrade(){
 step = 0;
-recoveryMode = false;
-stabilizeWin = false;
 update();
 }
 
 // ================= NEW SESSION =================
 function newSession(){
 step = 0;
-recoveryMode = false;
-stabilizeWin = false;
-
 wins = 0;
 losses = 0;
 total = 0;
@@ -260,7 +229,6 @@ update();
 }
 
 // ================= INIT =================
-balance = Number(document.getElementById("startBal").value);
 update();
 
 </script>
