@@ -2,42 +2,87 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth 2-Layer Recovery System</title>
+<title>Wealth Warriors Pure Ladder System</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#0b1220;color:white}
-.header{background:#123a7a;padding:14px;text-align:center;font-weight:bold}
-.card{background:#111a2e;margin:10px;padding:12px;border-radius:10px}
-input{width:100%;padding:8px;margin-top:5px;border-radius:6px;border:none}
-button{width:100%;padding:10px;margin-top:6px;border:none;border-radius:6px;font-weight:bold;cursor:pointer}
-.win{background:#39d353}
-.loss{background:#dc2626;color:white}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
-th,td{border:1px solid #222c44;padding:5px;text-align:center}
+body{
+margin:0;
+font-family:Arial;
+background:#0b1220;
+color:white;
+}
+
+.header{
+background:#123a7a;
+padding:14px;
+text-align:center;
+font-weight:bold;
+}
+
+.card{
+background:#111a2e;
+margin:10px;
+padding:12px;
+border-radius:10px;
+}
+
+input{
+width:100%;
+padding:8px;
+margin-top:5px;
+border-radius:6px;
+border:none;
+font-size:14px;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:6px;
+border:none;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.win{background:#39d353;}
+.loss{background:#dc2626;color:white;}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+font-size:12px;
+}
+
+th,td{
+border:1px solid #222c44;
+padding:5px;
+text-align:center;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">WEALTH 2-LAYER RECOVERY SYSTEM</div>
+<div class="header">WEALTH WARRIORS PURE LADDER</div>
 
 <div class="card">
+
 Starting Balance
 <input id="startBal" type="number" value="85">
 
 Base Trade
 <input id="baseTrade" type="number" value="2.8">
 
-<button onclick="apply()">APPLY</button>
+<button onclick="apply()">APPLY SETTINGS</button>
+
 </div>
 
 <div class="card">
 Balance: <b id="bal"></b><br>
-Trade: <b id="trd"></b><br>
-Mode: <b id="mode"></b><br>
-Step: <b id="step"></b><br>
-Wins: <b id="wins"></b><br>
-Loss Streak: <b id="loss"></b>
+Next Trade: <b id="trd"></b><br>
+Step: <b id="step"></b>
 </div>
 
 <div class="card">
@@ -45,6 +90,7 @@ Loss Streak: <b id="loss"></b>
 <button class="loss" onclick="loss()">LOSS</button>
 </div>
 
+<div class="card">
 <table>
 <thead>
 <tr>
@@ -56,20 +102,15 @@ Loss Streak: <b id="loss"></b>
 </thead>
 <tbody id="log"></tbody>
 </table>
+</div>
 
 <script>
 
 // ================= STATE =================
-const STATE = {
-mode: "NORMAL",
-step: 0,
-wins: 0,
-lossStreak: 0,
-locked: false
-};
-
 let balance = 0;
+let step = 0;
 let base = 2.8;
+
 let ladder = [];
 let history = [];
 
@@ -80,126 +121,69 @@ base = Number(document.getElementById("baseTrade").value);
 balance = Number(document.getElementById("startBal").value);
 
 ladder = [
-base,        // 0 = 2.80
-base*1.55,   // 1 = 4.34
-base*2.34,   // 2 = 6.55
-base*3.5,    // 3 = 9.80
-base*5.25,   // 4 = 14.70
-base*7.87    // 5 = 22.04 (DEEP ONLY)
+base,
+base * 1.55,
+base * 2.34,
+base * 3.5,
+base * 5.25,
+base * 7.87
 ];
 
-STATE.mode = "NORMAL";
-STATE.step = 0;
-STATE.wins = 0;
-STATE.lossStreak = 0;
-
+step = 0;
 history = [];
 
-render();
+update();
 }
 
-// ================= TRADE =================
-function getTrade(){
-return ladder[Math.min(STATE.step, ladder.length-1)];
+// ================= GET TRADE =================
+function trade(){
+return ladder[Math.min(step, ladder.length - 1)];
 }
 
 // ================= LOSS =================
 function loss(){
 
-if(STATE.locked) return;
-STATE.locked = true;
-
-STATE.lossStreak++;
-STATE.wins = 0;
-
-// MODE SWITCH (STRICT BOUNDARY)
-if(STATE.lossStreak >= 5){
-STATE.mode = "DEEP";
-STATE.step = 5; // lock to DEEP entry
-}
-else{
-STATE.mode = "NORMAL";
-}
-
-// NORMAL LADDER MOVEMENT ONLY
-if(STATE.mode === "NORMAL"){
-STATE.step = Math.min(STATE.step + 1, 4); // ONLY up to 14.70
-}
-
-const t = getTrade();
+let t = trade();
 balance -= t;
 
-history.push({r:"LOSS", t, ret:0});
+// move UP
+step = Math.min(step + 1, ladder.length - 1);
 
-STATE.locked = false;
-render();
+history.push({
+r:"LOSS",
+t:t,
+ret:0
+});
+
+update();
 }
 
 // ================= WIN =================
 function win(){
 
-if(STATE.locked) return;
-STATE.locked = true;
-
-const t = getTrade();
-const ret = t * 0.92;
+let t = trade();
+let ret = t * 0.92;
 
 balance += ret;
-STATE.wins++;
 
-history.push({r:"WIN", t, ret});
+// move DOWN
+step = Math.max(0, step - 1);
 
-// ================= NORMAL MODE =================
-if(STATE.mode === "NORMAL"){
+history.push({
+r:"WIN",
+t:t,
+ret:ret
+});
 
-if(STATE.wins >= 2){
-STATE.step = 0;
-STATE.wins = 0;
-}
-else{
-STATE.step = Math.max(0, STATE.step - 1);
+update();
 }
 
-}
-
-// ================= DEEP MODE =================
-else{
-
-// WIN 1 → stay at top (22.04 already locked)
-if(STATE.wins === 1){
-STATE.step = 5;
-}
-
-// WIN 2 → step down to 14.70
-else if(STATE.wins === 2){
-STATE.step = 4;
-}
-
-// WIN 3 → step down to 6.55 then reset
-else if(STATE.wins >= 3){
-STATE.step = 2;
-
-STATE.step = 0;
-STATE.wins = 0;
-STATE.lossStreak = 0;
-STATE.mode = "NORMAL";
-}
-
-}
-
-STATE.locked = false;
-render();
-}
-
-// ================= UI =================
-function render(){
+// ================= UPDATE =================
+function update(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
-document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
-document.getElementById("mode").innerText = STATE.mode;
-document.getElementById("step").innerText = STATE.step;
-document.getElementById("wins").innerText = STATE.wins;
-document.getElementById("loss").innerText = STATE.lossStreak;
+document.getElementById("trd").innerText = "$" + trade().toFixed(2);
+document.getElementById("step").innerText = step;
 
 let html = "";
 
@@ -216,7 +200,7 @@ html += `
 document.getElementById("log").innerHTML = html;
 }
 
-render();
+update();
 
 </script>
 
