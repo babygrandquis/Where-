@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Recovery System FINAL</title>
+<title>Wealth Recovery System PRO</title>
 
 <style>
 body{
@@ -65,9 +65,10 @@ text-align:center;
 
 <body>
 
-<div class="header">WEALTH RECOVERY SYSTEM FINAL</div>
+<div class="header">WEALTH RECOVERY SYSTEM PRO</div>
 
 <div class="card">
+
 Starting Balance
 <input id="startBal" type="number" value="85">
 
@@ -75,6 +76,7 @@ Base Trade
 <input id="baseTrade" type="number" value="2.8">
 
 <button onclick="apply()">APPLY</button>
+
 </div>
 
 <div class="card">
@@ -82,7 +84,7 @@ Balance: <b id="bal"></b><br>
 Trade: <b id="trd"></b><br>
 Step: <b id="step"></b><br>
 Loss Streak: <b id="loss"></b><br>
-Win Index: <b id="winIndex"></b>
+Wins: <b id="wins"></b>
 </div>
 
 <div class="card">
@@ -107,9 +109,8 @@ Win Index: <b id="winIndex"></b>
 // ================= STATE =================
 let balance = 0;
 let step = 0;
-
+let wins = 0;
 let lossStreak = 0;
-let winIndex = 0;
 
 let base = 2.8;
 let ladder = [];
@@ -122,18 +123,17 @@ base = Number(document.getElementById("baseTrade").value);
 balance = Number(document.getElementById("startBal").value);
 
 ladder = [
-base,              // 0 = base
-base * 1.55,      // 1
-base * 2.34,      // 2
-base * 3.5,       // 3
-base * 5.25,      // 4
-base * 7.87       // 5
+base,
+base * 1.55,
+base * 2.34,
+base * 3.5,
+base * 5.25,
+base * 7.87
 ];
 
-// reset everything clean
 step = 0;
+wins = 0;
 lossStreak = 0;
-winIndex = 0;
 history = [];
 
 update();
@@ -150,11 +150,10 @@ function loss(){
 let t = trade();
 balance -= t;
 
-// ladder moves up ONLY in normal mode
 step = Math.min(step + 1, ladder.length - 1);
 
 lossStreak++;
-winIndex = 0;
+wins = 0;
 
 history.push({r:"LOSS", t:t, ret:0});
 
@@ -168,47 +167,47 @@ let t = trade();
 let ret = t * 0.92;
 
 balance += ret;
+wins++;
+
+history.push({r:"WIN", t:t, ret:ret});
 
 // ================= NORMAL MODE =================
 if(lossStreak < 5){
 
-// 2 wins → reset
-winIndex = 0;
-
+if(wins >= 2){
+step = 0;
+wins = 0;
+}
+else{
 step = Math.max(0, step - 1);
-
-if(step === 0){
-winIndex = 0;
 }
 
 }
 
-// ================= DEEP MODE =================
+// ================= DEEP LOSS MODE (ONLY FIXED PART) =================
 else{
 
-winIndex++;
-
-// FIXED RECOVERY SEQUENCE (NO LADDER LOGIC)
-
-if(winIndex === 1){
+// 🔥 WIN 1 → top recovery level
+if(wins === 1){
 step = 5; // 22.04
 }
 
-else if(winIndex === 2){
+// 🔥 WIN 2 → mid level
+else if(wins === 2){
 step = 4; // 14.70
 }
 
-else if(winIndex === 3){
+// 🔥 WIN 3 → lower level then RESET
+else if(wins === 3){
+step = 2; // 6.55
 
-step = 0;       // RESET
+// RESET SYSTEM
+step = 0;
+wins = 0;
 lossStreak = 0;
-winIndex = 0;
-
 }
 
 }
-
-history.push({r:"WIN", t:t, ret:ret});
 
 update();
 }
@@ -219,8 +218,8 @@ function update(){
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + trade().toFixed(2);
 document.getElementById("step").innerText = step;
+document.getElementById("wins").innerText = wins;
 document.getElementById("loss").innerText = lossStreak;
-document.getElementById("winIndex").innerText = winIndex;
 
 let html = "";
 
