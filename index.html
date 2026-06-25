@@ -49,6 +49,7 @@ cursor:pointer;
 .loss{background:#dc2626;color:white;}
 .reset{background:#f59e0b;}
 .new{background:#2563eb;color:white;}
+.apply{background:#16a34a;color:white;}
 
 table{
 width:100%;
@@ -70,11 +71,15 @@ text-align:center;
 <div class="header">WEALTH WARRIORS TRADE MANAGER</div>
 
 <div class="card">
+
 Starting Balance
 <input id="startBal" type="number" value="85">
 
 Base Trade
 <input id="baseTrade" type="number" value="2.8">
+
+<button class="apply" onclick="applySettings()">APPLY SETTINGS</button>
+
 </div>
 
 <div class="card">
@@ -121,13 +126,21 @@ let wins = 0;
 let losses = 0;
 let total = 0;
 
+let ladder = [];
+let applied = false;
+
 let log = [];
 
-// ================= BUILD LADDER ONCE (IMPORTANT FIX) =================
-let ladder = [];
+// ================= APPLY SETTINGS =================
+function applySettings(){
 
-function initLadder(){
+let startBal = Number(document.getElementById("startBal").value);
 let base = Number(document.getElementById("baseTrade").value);
+
+// lock balance
+balance = startBal;
+
+// build ladder ONCE (FIX IMPORTANT)
 ladder = [
 base,
 base * 1.55,
@@ -136,10 +149,16 @@ base * 3.5,
 base * 5.25,
 base * 7.87
 ];
+
+applied = true;
+step = 0;
+
+update();
 }
 
 // ================= GET TRADE =================
 function getTrade(){
+if(!applied) return 0;
 return ladder[Math.min(step, ladder.length - 1)];
 }
 
@@ -175,6 +194,8 @@ document.getElementById("table").innerHTML = html;
 // ================= WIN =================
 function win(){
 
+if(!applied) return;
+
 let trade = getTrade();
 let ret = trade * 0.92;
 
@@ -185,7 +206,7 @@ log.push({res:"WIN", trade, ret});
 wins++;
 total++;
 
-// MOVE DOWN ALWAYS (NO REPEATS POSSIBLE NOW)
+// move down ladder
 step = Math.max(0, step - 1);
 
 update();
@@ -194,13 +215,15 @@ update();
 // ================= LOSS =================
 function loss(){
 
+if(!applied) return;
+
 let trade = getTrade();
 
 balance -= trade;
 
 log.push({res:"LOSS", trade, ret:0});
 
-// MOVE UP
+// move up ladder
 step++;
 
 losses++;
@@ -225,8 +248,6 @@ log = [];
 update();
 }
 
-// ================= INIT =================
-initLadder();
 update();
 
 </script>
