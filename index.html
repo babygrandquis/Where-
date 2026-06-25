@@ -83,7 +83,9 @@ Base Trade
 
 Balance: <b id="bal">$0.00</b><br>
 Next Trade: <b id="trd">$0.00</b><br>
-Step: <b id="step">0</b>
+Step: <b id="step">0</b><br>
+Mode: <b id="mode">NORMAL</b><br>
+Loss Streak: <b id="streak">0</b>
 
 </div>
 
@@ -129,36 +131,43 @@ let step = 0;
 let wins = 0;
 let losses = 0;
 let total = 0;
+let lossStreak = 0;
 let log = [];
 
-// ================= FIXED LADDER =================
-const ladder = [
-2.80,
-4.35,
-6.55,
-9.80,
-14.70,
-22.05
+// ================= BUILD LADDER FROM BASE TRADE =================
+function getLadder(){
+let base = Number(document.getElementById("baseTrade").value);
+return [
+base,
+base * 1.55,
+base * 2.34,
+base * 3.5,
+base * 5.25,
+base * 7.87
 ];
-
-// ================= GET =================
-function getStart(){
-return Number(document.getElementById("startBal").value);
 }
 
-// ================= TRADE =================
+// ================= HELPERS =================
 function getTrade(){
+let ladder = getLadder();
 return ladder[Math.min(step, ladder.length - 1)];
+}
+
+function isRecoveryMode(){
+return lossStreak >= 3;
 }
 
 // ================= UPDATE =================
 function update(){
 
-balance = getStart();
+balance = Number(document.getElementById("startBal").value);
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
 document.getElementById("step").innerText = step;
+
+document.getElementById("mode").innerText = isRecoveryMode() ? "RECOVERY" : "NORMAL";
+document.getElementById("streak").innerText = lossStreak;
 
 document.getElementById("total").innerText = total;
 document.getElementById("wins").innerText = wins;
@@ -190,12 +199,14 @@ let ret = trade * 0.92;
 
 log.push({res:"WIN", trade, ret});
 
-// 🔥 FAST RECOVERY RULE
-if(step >= 3){
-step = Math.max(0, step - 1);
+// recovery logic
+if(isRecoveryMode()){
+step = Math.max(0, step - 2);
 } else {
-step = 0;
+step = Math.max(0, step - 1);
 }
+
+lossStreak = 0;
 
 wins++;
 total++;
@@ -212,6 +223,8 @@ log.push({res:"LOSS", trade, ret:0});
 
 step++;
 
+lossStreak++;
+
 losses++;
 total++;
 
@@ -221,18 +234,18 @@ update();
 // ================= RESET =================
 function resetTrade(){
 step = 0;
+lossStreak = 0;
 update();
 }
 
-// ================= NEW SESSION =================
+// ================= NEW SESSION (KEEP BALANCE) =================
 function newSession(){
-
 step = 0;
+lossStreak = 0;
 wins = 0;
 losses = 0;
 total = 0;
 log = [];
-
 update();
 }
 
