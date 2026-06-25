@@ -106,7 +106,6 @@ Wins: <b id="wins"></b>
 
 <script>
 
-// ================= STATE =================
 let balance = 0;
 let step = 0;
 let wins = 0;
@@ -139,7 +138,7 @@ history = [];
 update();
 }
 
-// ================= GET TRADE =================
+// ================= TRADE =================
 function trade(){
 return ladder[Math.min(step, ladder.length - 1)];
 }
@@ -184,24 +183,24 @@ step = Math.max(0, step - 1);
 
 }
 
-// ================= DEEP LOSS MODE (ONLY FIXED PART) =================
+// ================= DEEP LOSS MODE (FIXED SEQUENCE) =================
 else{
 
-// 🔥 WIN 1 → top recovery level
+// WIN 1 → 22.04
 if(wins === 1){
-step = 5; // 22.04
+step = 5;
 }
 
-// 🔥 WIN 2 → mid level
+// WIN 2 → 14.70
 else if(wins === 2){
-step = 4; // 14.70
+step = 4;
 }
 
-// 🔥 WIN 3 → lower level then RESET
+// WIN 3 → 6.55 → RESET
 else if(wins === 3){
-step = 2; // 6.55
+step = 2;
 
-// RESET SYSTEM
+// RESET EVERYTHING
 step = 0;
 wins = 0;
 lossStreak = 0;
