@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!DOCTYPE<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Warriors Trade Manager</title>
+<title>Wealth Warriors Trade Manager (V2)</title>
 
 <style>
 body{
@@ -47,9 +47,9 @@ cursor:pointer;
 
 .win{background:#39d353;}
 .loss{background:#dc2626;color:white;}
+.apply{background:#16a34a;color:white;}
 .reset{background:#f59e0b;}
 .new{background:#2563eb;color:white;}
-.apply{background:#16a34a;color:white;}
 
 table{
 width:100%;
@@ -68,7 +68,7 @@ text-align:center;
 
 <body>
 
-<div class="header">WEALTH WARRIORS TRADE MANAGER (VERSION B)</div>
+<div class="header">WEALTH WARRIORS TRADE MANAGER (VERSION B v2)</div>
 
 <div class="card">
 
@@ -137,6 +137,7 @@ let base = Number(document.getElementById("baseTrade").value);
 
 balance = startBal;
 
+// LOCK LADDER ONCE
 ladder = [
 base,
 base * 1.55,
@@ -151,12 +152,12 @@ step = 0;
 update();
 }
 
-// ================= TRADE =================
+// ================= GET TRADE =================
 function getTrade(){
 return ladder[Math.min(step, ladder.length - 1)];
 }
 
-// ================= WIN (VERSION B LOGIC) =================
+// ================= WIN (CONTROLLED FAST RECOVERY) =================
 function win(){
 
 let trade = getTrade();
@@ -169,9 +170,10 @@ total++;
 
 log.push({res:"WIN", trade, ret});
 
-// 🔥 VERSION B FAST RECOVERY RULE
-if(step >= 3){
-step = Math.max(0, step - 2); // skip level (fast recovery)
+// 🔥 VERSION B v2 RULE
+// Only fast jump if deep in recovery (step >= 4)
+if(step >= 4){
+step = Math.max(0, step - 2);
 } else {
 step = Math.max(0, step - 1);
 }
@@ -205,16 +207,14 @@ update();
 // ================= NEW SESSION =================
 function newSession(){
 step = 0;
-
 wins = 0;
 losses = 0;
 total = 0;
 log = [];
-
 update();
 }
 
-// ================= UPDATE UI =================
+// ================= UPDATE =================
 function update(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
