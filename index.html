@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Locked Recovery System</title>
+<title>Wealth Warriors Locked System</title>
 
 <style>
 body{
@@ -66,7 +66,7 @@ text-align:center;
 
 <body>
 
-<div class="header">LOCKED RECOVERY SYSTEM</div>
+<div class="header">WEALTH WARRIORS TRADE MANAGER (LOCKED)</div>
 
 <div class="card">
 
@@ -83,6 +83,7 @@ Base Trade
 <div class="card">
 Balance: <b id="bal">$0.00</b><br>
 Next Trade: <b id="trd">$0.00</b><br>
+Step: <b id="step">0</b><br>
 Win Cycle: <b id="cycle">0</b>
 </div>
 
@@ -112,6 +113,7 @@ let balance = 0;
 let step = 0;
 let cycle = 0;
 
+let base = 2.8;
 let ladder = [];
 let log = [];
 let total = 0;
@@ -119,21 +121,23 @@ let total = 0;
 // ================= APPLY SETTINGS =================
 function applySettings(){
 
-let base = Number(document.getElementById("baseTrade").value);
+base = Number(document.getElementById("baseTrade").value);
 balance = Number(document.getElementById("startBal").value);
 
-// YOUR EXACT LADDER
+// LADDER (FIXED STRUCTURE)
 ladder = [
-base,                 // 2.80
-base * 1.55,         // 4.34
-base * 2.34,         // 6.55
-base * 3.5,          // 9.80
-base * 5.25,         // 14.70
-base * 7.87          // 22.05
+base,
+base * 1.55,
+base * 2.34,
+base * 3.5,
+base * 5.25,
+base * 7.87
 ];
 
 step = 0;
 cycle = 0;
+log = [];
+total = 0;
 
 update();
 }
@@ -149,9 +153,10 @@ function loss(){
 let trade = getTrade();
 balance -= trade;
 
+// move up risk
 step = Math.min(step + 1, ladder.length - 1);
 
-// reset win cycle on loss
+// reset win cycle
 cycle = 0;
 
 log.push({res:"LOSS", trade, ret:0});
@@ -164,31 +169,35 @@ update();
 function win(){
 
 let trade = getTrade();
-let ret = trade * 0.92;
 
+// 🔥 FORCE CHECK FIRST (CRITICAL FIX)
+cycle = cycle + 1;
+
+// calculate return AFTER cycle update
+let ret = trade * 0.92;
 balance += ret;
 
-cycle++;
+// 🔥 HARD OVERRIDE RULE
+if(cycle >= 3){
+step = 0;
+cycle = 0;   // RESET EVERYTHING
+}
+else{
+step = Math.max(0, step - 1);
+}
 
 log.push({res:"WIN", trade, ret});
 total++;
 
-// 🔥 CORE RULE: 3RD WIN ALWAYS RESET
-if(cycle >= 3){
-step = 0;        // reset to base trade
-cycle = 0;
-} else {
-step = Math.max(0, step - 1);
-}
-
 update();
 }
 
-// ================= UPDATE =================
+// ================= UPDATE UI =================
 function update(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
+document.getElementById("step").innerText = step;
 document.getElementById("cycle").innerText = cycle;
 
 let html = "";
