@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Warriors Recovery System</title>
+<title>Wealth Warriors Trade Manager</title>
 
 <style>
 body{
@@ -65,34 +65,31 @@ text-align:center;
 
 <body>
 
-<div class="header">WEALTH WARRIORS RECOVERY SYSTEM</div>
+<div class="header">WEALTH WARRIORS TRADE MANAGER</div>
 
-<!-- INPUT PANEL -->
 <div class="card">
 Starting Balance
-<input id="balInput" type="number" value="85">
+<input id="startBal" type="number" value="85">
 
 Base Trade
-<input id="tradeInput" type="number" value="2.64">
+<input id="baseTrade" type="number" value="2.8">
 
-<button onclick="applySettings()">APPLY SETTINGS</button>
+<button onclick="apply()">APPLY SETTINGS</button>
 </div>
 
-<!-- STATUS -->
 <div class="card">
-Balance: <b id="bal"></b><br>
-Trade: <b id="trd"></b><br>
-Step: <b id="step"></b><br>
-Loss Streak: <b id="loss"></b>
+Balance: <b id="bal">$0.00</b><br>
+Trade: <b id="trd">$0.00</b><br>
+Step: <b id="step">0</b><br>
+Mode: <b id="mode">NORMAL</b><br>
+Wins: <b id="wins">0</b>
 </div>
 
-<!-- ACTIONS -->
 <div class="card">
 <button class="win" onclick="win()">WIN</button>
 <button class="loss" onclick="loss()">LOSS</button>
 </div>
 
-<!-- LOG -->
 <table>
 <thead>
 <tr>
@@ -107,72 +104,74 @@ Loss Streak: <b id="loss"></b>
 
 <script>
 
-// ================= STATE =================
 let balance = 0;
-let base = 2.64;
-
+let base = 2.8;
 let step = 0;
-let lossStreak = 0;
+let wins = 0;
+let mode = "NORMAL";
 
 let normal = [];
 let extended = [];
 let history = [];
 
-// ================= APPLY SETTINGS =================
-function applySettings(){
+// ================= APPLY =================
+function apply(){
 
-balance = Number(document.getElementById("balInput").value);
-base = Number(document.getElementById("tradeInput").value);
+base = Number(document.getElementById("baseTrade").value);
+balance = Number(document.getElementById("startBal").value);
 
-// NORMAL MODE (0–4 losses)
+step = 0;
+wins = 0;
+mode = "NORMAL";
+history = [];
+
 normal = [
 base,
 base * 1.55,
 base * 2.34,
-base * 3.5
-];
-
-// EXTENDED MODE (5+ losses)
-extended = [
+base * 3.5,
 base * 5.25,
 base * 7.87
 ];
 
-// RESET STATE
-step = 0;
-lossStreak = 0;
-history = [];
+extended = [
+base * 7.87,
+base * 6.6,
+base * 5.25,
+base * 3.9,
+base * 2.7,
+base
+];
 
 update();
 }
 
-// ================= GET TRADE =================
+// ================= TRADE =================
 function getTrade(){
 
-if(lossStreak >= 5){
-return extended[Math.min(step - 4, extended.length - 1)];
-}
-
+if(mode === "NORMAL"){
 return normal[Math.min(step, normal.length - 1)];
+}else{
+return extended[Math.min(step, extended.length - 1)];
+}
 }
 
 // ================= LOSS =================
 function loss(){
 
 let t = getTrade();
-
 balance -= t;
 
-history.push({
-r:"LOSS",
-t:t,
-ret:0
-});
-
-// state update
-lossStreak++;
 step++;
+wins = 0;
 
+// ENTER EXTENDED MODE
+if(step >= 5){
+mode = "EXTENDED";
+step = 5;
+}
+
+history.push({r:"LOSS", t:t, ret:0});
 update();
 }
 
@@ -184,35 +183,29 @@ let ret = t * 0.92;
 
 balance += ret;
 
-history.push({
-r:"WIN",
-t:t,
-ret:ret
-});
+wins++;
 
-// recovery logic
-if(lossStreak >= 5){
-step = Math.max(0, step - 1);
-
-// reset extended mode when recovered
-if(step <= 4){
-lossStreak = 0;
-}
+if(wins >= 2){
+step = 0;
+wins = 0;
+mode = "NORMAL"; // RESET BACK TO BASE MODE
 }
 else{
 step = Math.max(0, step - 1);
 }
 
+history.push({r:"WIN", t:t, ret:ret});
 update();
 }
 
-// ================= UPDATE UI =================
+// ================= UPDATE =================
 function update(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
 document.getElementById("step").innerText = step;
-document.getElementById("loss").innerText = lossStreak;
+document.getElementById("wins").innerText = wins;
+document.getElementById("mode").innerText = mode;
 
 let html = "";
 
