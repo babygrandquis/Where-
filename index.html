@@ -68,7 +68,7 @@ text-align:center;
 
 <body>
 
-<div class="header">WEALTH WARRIORS TRADE MANAGER</div>
+<div class="header">WEALTH WARRIORS TRADE MANAGER (VERSION B)</div>
 
 <div class="card">
 
@@ -127,8 +127,6 @@ let losses = 0;
 let total = 0;
 
 let ladder = [];
-let applied = false;
-
 let log = [];
 
 // ================= APPLY SETTINGS =================
@@ -137,10 +135,8 @@ function applySettings(){
 let startBal = Number(document.getElementById("startBal").value);
 let base = Number(document.getElementById("baseTrade").value);
 
-// lock balance
 balance = startBal;
 
-// build ladder ONCE (FIX IMPORTANT)
 ladder = [
 base,
 base * 1.55,
@@ -150,19 +146,75 @@ base * 5.25,
 base * 7.87
 ];
 
-applied = true;
 step = 0;
 
 update();
 }
 
-// ================= GET TRADE =================
+// ================= TRADE =================
 function getTrade(){
-if(!applied) return 0;
 return ladder[Math.min(step, ladder.length - 1)];
 }
 
-// ================= UPDATE =================
+// ================= WIN (VERSION B LOGIC) =================
+function win(){
+
+let trade = getTrade();
+let ret = trade * 0.92;
+
+balance += ret;
+
+wins++;
+total++;
+
+log.push({res:"WIN", trade, ret});
+
+// 🔥 VERSION B FAST RECOVERY RULE
+if(step >= 3){
+step = Math.max(0, step - 2); // skip level (fast recovery)
+} else {
+step = Math.max(0, step - 1);
+}
+
+update();
+}
+
+// ================= LOSS =================
+function loss(){
+
+let trade = getTrade();
+
+balance -= trade;
+
+losses++;
+total++;
+
+log.push({res:"LOSS", trade, ret:0});
+
+step++;
+
+update();
+}
+
+// ================= RESET =================
+function resetTrade(){
+step = 0;
+update();
+}
+
+// ================= NEW SESSION =================
+function newSession(){
+step = 0;
+
+wins = 0;
+losses = 0;
+total = 0;
+log = [];
+
+update();
+}
+
+// ================= UPDATE UI =================
 function update(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
@@ -189,63 +241,6 @@ html += `
 });
 
 document.getElementById("table").innerHTML = html;
-}
-
-// ================= WIN =================
-function win(){
-
-if(!applied) return;
-
-let trade = getTrade();
-let ret = trade * 0.92;
-
-balance += ret;
-
-log.push({res:"WIN", trade, ret});
-
-wins++;
-total++;
-
-// move down ladder
-step = Math.max(0, step - 1);
-
-update();
-}
-
-// ================= LOSS =================
-function loss(){
-
-if(!applied) return;
-
-let trade = getTrade();
-
-balance -= trade;
-
-log.push({res:"LOSS", trade, ret:0});
-
-// move up ladder
-step++;
-
-losses++;
-total++;
-
-update();
-}
-
-// ================= RESET =================
-function resetTrade(){
-step = 0;
-update();
-}
-
-// ================= NEW SESSION =================
-function newSession(){
-step = 0;
-wins = 0;
-losses = 0;
-total = 0;
-log = [];
-update();
 }
 
 update();
