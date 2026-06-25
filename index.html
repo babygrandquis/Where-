@@ -19,7 +19,7 @@ th,td{border:1px solid #222c44;padding:5px;text-align:center}
 
 <body>
 
-<div class="header">WEALTH STATE MACHINE PRO (STEP-DOWN FIX)</div>
+<div class="header">WEALTH STATE MACHINE PRO (TIMING FIXED)</div>
 
 <div class="card">
 Starting Balance
@@ -129,7 +129,7 @@ STATE.locked = false;
 render();
 }
 
-// ================= WIN =================
+// ================= WIN (FIXED TIMING) =================
 function win(){
 
 if(STATE.locked) return;
@@ -156,21 +156,24 @@ STATE.step = Math.max(0, STATE.step - 1);
 
 }
 
-// ================= DEEP MODE (FIXED STEP-DOWN LOGIC) =================
+// ================= DEEP MODE (FIXED STEP TIMING) =================
 else{
 
-// FIRST WIN → FORCE TOP LEVEL
+// WIN 1 → force top immediately
 if(STATE.wins === 1){
 STATE.step = 5;
 }
 
-// EVERY NEXT WIN → STEP DOWN ONE LEVEL
-else if(STATE.wins >= 2){
-STATE.step = Math.max(0, STATE.step - 1);
+// WIN 2 → immediately step down
+else if(STATE.wins === 2){
+STATE.step = 4;
 }
 
-// RESET AFTER 3 WINS
-if(STATE.wins >= 3){
+// WIN 3 → step down then reset
+else if(STATE.wins === 3){
+STATE.step = 2;
+
+// RESET ALL
 STATE.step = 0;
 STATE.wins = 0;
 STATE.lossStreak = 0;
@@ -179,8 +182,10 @@ STATE.mode = "NORMAL";
 
 }
 
-STATE.locked = false;
+// IMPORTANT: force UI sync AFTER state change
 render();
+
+STATE.locked = false;
 }
 
 // ================= UI =================
