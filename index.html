@@ -106,6 +106,7 @@ Wins: <b id="wins"></b>
 
 <script>
 
+// ================= STATE =================
 let balance = 0;
 let step = 0;
 let wins = 0;
@@ -183,24 +184,19 @@ step = Math.max(0, step - 1);
 
 }
 
-// ================= DEEP LOSS MODE (FIXED SEQUENCE) =================
+// ================= DEEP MODE (FIXED SEQUENCE - NO STEP BUGS) =================
 else{
 
-// WIN 1 → 22.04
-if(wins === 1){
-step = 5;
+const deepSequence = [5, 4, 2]; // 22.04 → 14.70 → 6.55
+
+let i = wins - 1;
+
+if(i >= 0 && i < deepSequence.length){
+step = deepSequence[i];
 }
 
-// WIN 2 → 14.70
-else if(wins === 2){
-step = 4;
-}
-
-// WIN 3 → 6.55 → RESET
-else if(wins === 3){
-step = 2;
-
-// RESET EVERYTHING
+// RESET AFTER 3RD WIN
+if(wins >= 3){
 step = 0;
 wins = 0;
 lossStreak = 0;
