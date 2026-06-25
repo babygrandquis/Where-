@@ -2,73 +2,26 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Recovery System PRO</title>
+<title>State Machine Recovery System</title>
 
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:#0b1220;
-color:white;
-}
-
-.header{
-background:#123a7a;
-padding:14px;
-text-align:center;
-font-weight:bold;
-}
-
-.card{
-background:#111a2e;
-margin:10px;
-padding:12px;
-border-radius:10px;
-}
-
-input{
-width:100%;
-padding:8px;
-margin-top:5px;
-border-radius:6px;
-border:none;
-font-size:14px;
-}
-
-button{
-width:100%;
-padding:10px;
-margin-top:6px;
-border:none;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.win{background:#39d353;}
-.loss{background:#dc2626;color:white;}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-font-size:12px;
-}
-
-th,td{
-border:1px solid #222c44;
-padding:5px;
-text-align:center;
-}
+body{margin:0;font-family:Arial;background:#0b1220;color:white}
+.header{background:#123a7a;padding:14px;text-align:center;font-weight:bold}
+.card{background:#111a2e;margin:10px;padding:12px;border-radius:10px}
+input{width:100%;padding:8px;margin-top:5px;border-radius:6px;border:none}
+button{width:100%;padding:10px;margin-top:6px;border:none;border-radius:6px;font-weight:bold;cursor:pointer}
+.win{background:#39d353}
+.loss{background:#dc2626;color:white}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+th,td{border:1px solid #222c44;padding:5px;text-align:center}
 </style>
 </head>
 
 <body>
 
-<div class="header">WEALTH RECOVERY SYSTEM PRO</div>
+<div class="header">WEALTH STATE MACHINE (BULLETPROOF)</div>
 
 <div class="card">
-
 Starting Balance
 <input id="startBal" type="number" value="85">
 
@@ -76,15 +29,15 @@ Base Trade
 <input id="baseTrade" type="number" value="2.8">
 
 <button onclick="apply()">APPLY</button>
-
 </div>
 
 <div class="card">
 Balance: <b id="bal"></b><br>
 Trade: <b id="trd"></b><br>
+Mode: <b id="mode"></b><br>
 Step: <b id="step"></b><br>
-Loss Streak: <b id="loss"></b><br>
-Wins: <b id="wins"></b>
+Wins: <b id="wins"></b><br>
+Loss Streak: <b id="loss"></b>
 </div>
 
 <div class="card">
@@ -106,17 +59,21 @@ Wins: <b id="wins"></b>
 
 <script>
 
-// ================= STATE =================
-let balance = 0;
-let step = 0;
-let wins = 0;
-let lossStreak = 0;
+// ================= STATE MACHINE =================
+const STATE = {
+mode: "NORMAL",
+step: 0,
+wins: 0,
+lossStreak: 0,
+locked: false
+};
 
+let balance = 0;
 let base = 2.8;
 let ladder = [];
 let history = [];
 
-// ================= APPLY =================
+// ================= INIT =================
 function apply(){
 
 base = Number(document.getElementById("baseTrade").value);
@@ -124,97 +81,117 @@ balance = Number(document.getElementById("startBal").value);
 
 ladder = [
 base,
-base * 1.55,
-base * 2.34,
-base * 3.5,
-base * 5.25,
-base * 7.87
+base*1.55,
+base*2.34,
+base*3.5,
+base*5.25,
+base*7.87
 ];
 
-step = 0;
-wins = 0;
-lossStreak = 0;
+STATE.step = 0;
+STATE.wins = 0;
+STATE.lossStreak = 0;
+STATE.mode = "NORMAL";
+STATE.locked = false;
+
 history = [];
 
-update();
+render();
 }
 
-// ================= TRADE =================
-function trade(){
-return ladder[Math.min(step, ladder.length - 1)];
+// ================= ATOMIC TRADE =================
+function getTrade(){
+return ladder[Math.min(STATE.step, ladder.length-1)];
 }
 
 // ================= LOSS =================
 function loss(){
 
-let t = trade();
+if(STATE.locked) return;
+STATE.locked = true;
+
+const t = getTrade();
 balance -= t;
 
-step = Math.min(step + 1, ladder.length - 1);
+STATE.step = Math.min(STATE.step + 1, ladder.length-1);
+STATE.lossStreak++;
+STATE.wins = 0;
 
-lossStreak++;
-wins = 0;
+history.push({r:"LOSS", t, ret:0});
 
-history.push({r:"LOSS", t:t, ret:0});
-
-update();
+STATE.locked = false;
+render();
 }
 
 // ================= WIN =================
 function win(){
 
-let t = trade();
-let ret = t * 0.92;
+if(STATE.locked) return;
+STATE.locked = true;
+
+const t = getTrade();
+const ret = t * 0.92;
 
 balance += ret;
-wins++;
+STATE.wins++;
 
-history.push({r:"WIN", t:t, ret:ret});
+history.push({r:"WIN", t, ret});
+
+// ================= MODE SWITCH =================
+if(STATE.lossStreak >= 5){
+STATE.mode = "DEEP";
+} else {
+STATE.mode = "NORMAL";
+}
 
 // ================= NORMAL MODE =================
-if(lossStreak < 5){
+if(STATE.mode === "NORMAL"){
 
-if(wins >= 2){
-step = 0;
-wins = 0;
+if(STATE.wins >= 2){
+STATE.step = 0;
+STATE.wins = 0;
 }
 else{
-step = Math.max(0, step - 1);
+STATE.step = Math.max(0, STATE.step - 1);
 }
 
 }
 
-// ================= DEEP MODE (FIXED SEQUENCE - NO STEP BUGS) =================
+// ================= DEEP MODE =================
 else{
 
-const deepSequence = [5, 4, 2]; // 22.04 → 14.70 → 6.55
+// FIXED STATE FLOW
+const deepPath = [5, 4, 2];
 
-let i = wins - 1;
+const idx = STATE.wins - 1;
 
-if(i >= 0 && i < deepSequence.length){
-step = deepSequence[i];
+if(idx < deepPath.length){
+STATE.step = deepPath[idx];
 }
 
-// RESET AFTER 3RD WIN
-if(wins >= 3){
-step = 0;
-wins = 0;
-lossStreak = 0;
+// RESET AFTER 3 WINS
+if(STATE.wins >= 3){
+STATE.step = 0;
+STATE.wins = 0;
+STATE.lossStreak = 0;
+STATE.mode = "NORMAL";
 }
 
 }
 
-update();
+STATE.locked = false;
+render();
 }
 
-// ================= UPDATE =================
-function update(){
+// ================= UI =================
+function render(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
-document.getElementById("trd").innerText = "$" + trade().toFixed(2);
-document.getElementById("step").innerText = step;
-document.getElementById("wins").innerText = wins;
-document.getElementById("loss").innerText = lossStreak;
+document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
+document.getElementById("mode").innerText = STATE.mode;
+document.getElementById("step").innerText = STATE.step;
+document.getElementById("wins").innerText = STATE.wins;
+document.getElementById("loss").innerText = STATE.lossStreak;
 
 let html = "";
 
@@ -231,7 +208,7 @@ html += `
 document.getElementById("log").innerHTML = html;
 }
 
-update();
+render();
 
 </script>
 
