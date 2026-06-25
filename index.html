@@ -67,7 +67,7 @@ text-align:center;
 
 <body>
 
-<div class="header">WHERE DISCIPLINE MANAGER</div>
+<div class="header">WEALTH WARRIORS TRADE MANAGER</div>
 
 <div class="card">
 
@@ -91,7 +91,7 @@ Step: <b id="step">0</b>
 
 <button class="win" onclick="win()">WIN</button>
 <button class="loss" onclick="loss()">LOSS</button>
-<button class="reset" onclick="resetTrade()">RESET TRADE</button>
+<button class="reset" onclick="resetTrade()">RESET</button>
 <button class="new" onclick="newSession()">NEW SESSION</button>
 
 </div>
@@ -131,7 +131,7 @@ let losses = 0;
 let total = 0;
 let log = [];
 
-// ================= EXACT LADDER =================
+// ================= FIXED LADDER =================
 const ladder = [
 2.80,
 4.35,
@@ -141,22 +141,20 @@ const ladder = [
 22.05
 ];
 
-// ================= GET VALUES =================
-function getStartBalance(){
+// ================= GET =================
+function getStart(){
 return Number(document.getElementById("startBal").value);
 }
 
+// ================= TRADE =================
 function getTrade(){
 return ladder[Math.min(step, ladder.length - 1)];
 }
 
-// ================= UPDATE UI =================
+// ================= UPDATE =================
 function update(){
 
-// always sync balance on first run OR reset state
-if(total === 0 && wins === 0 && losses === 0){
-balance = getStartBalance();
-}
+balance = getStart();
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
@@ -190,12 +188,14 @@ function win(){
 let trade = getTrade();
 let ret = trade * 0.92;
 
-balance += ret;
-
 log.push({res:"WIN", trade, ret});
 
-// step back (recovery easing)
+// 🔥 FAST RECOVERY RULE
+if(step >= 3){
 step = Math.max(0, step - 1);
+} else {
+step = 0;
+}
 
 wins++;
 total++;
@@ -208,11 +208,8 @@ function loss(){
 
 let trade = getTrade();
 
-balance -= trade;
-
 log.push({res:"LOSS", trade, ret:0});
 
-// step forward (recovery pressure)
 step++;
 
 losses++;
@@ -221,13 +218,13 @@ total++;
 update();
 }
 
-// ================= RESET TRADE =================
+// ================= RESET =================
 function resetTrade(){
 step = 0;
 update();
 }
 
-// ================= NEW SESSION (KEEP BALANCE) =================
+// ================= NEW SESSION =================
 function newSession(){
 
 step = 0;
@@ -238,16 +235,6 @@ log = [];
 
 update();
 }
-
-// ================= LIVE SYNC =================
-document.getElementById("startBal").addEventListener("input", ()=>{
-balance = getStartBalance();
-update();
-});
-
-document.getElementById("baseTrade").addEventListener("input", ()=>{
-update();
-});
 
 // ================= INIT =================
 update();
