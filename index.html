@@ -19,7 +19,7 @@ th,td{border:1px solid #222c44;padding:5px;text-align:center}
 
 <body>
 
-<div class="header">WEALTH STATE MACHINE PRO (FIXED DEEP START)</div>
+<div class="header">WEALTH STATE MACHINE PRO (STEP-DOWN FIX)</div>
 
 <div class="card">
 Starting Balance
@@ -104,25 +104,21 @@ function getTrade(){
 return ladder[Math.min(STATE.step, ladder.length-1)];
 }
 
-// ================= LOSS (FIXED ORDER - CRITICAL) =================
+// ================= LOSS =================
 function loss(){
 
 if(STATE.locked) return;
 STATE.locked = true;
 
-// STEP 1: increment loss FIRST
 STATE.lossStreak++;
 
-// STEP 2: check deep mode IMMEDIATELY
 if(STATE.lossStreak >= 5){
 STATE.mode = "DEEP";
 }
 
-// STEP 3: take trade AFTER mode is correct
 const t = getTrade();
 balance -= t;
 
-// STEP 4: move step AFTER execution
 STATE.step = Math.min(STATE.step + 1, ladder.length - 1);
 
 STATE.wins = 0;
@@ -160,15 +156,17 @@ STATE.step = Math.max(0, STATE.step - 1);
 
 }
 
-// ================= DEEP MODE =================
+// ================= DEEP MODE (FIXED STEP-DOWN LOGIC) =================
 else{
 
-const deepPath = [5,4,2]; // 22.04 → 14.70 → 6.55
+// FIRST WIN → FORCE TOP LEVEL
+if(STATE.wins === 1){
+STATE.step = 5;
+}
 
-const idx = STATE.wins - 1;
-
-if(idx < deepPath.length){
-STATE.step = deepPath[idx];
+// EVERY NEXT WIN → STEP DOWN ONE LEVEL
+else if(STATE.wins >= 2){
+STATE.step = Math.max(0, STATE.step - 1);
 }
 
 // RESET AFTER 3 WINS
