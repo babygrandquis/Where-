@@ -82,7 +82,7 @@ Base Trade
 Balance: <b id="bal">$0.00</b><br>
 Next Trade: <b id="trd">$0.00</b><br>
 Step: <b id="step">0</b><br>
-Win Streak: <b id="wstreak">0</b>
+Mode: <b id="mode">NORMAL</b>
 </div>
 
 <div class="card">
@@ -123,7 +123,9 @@ let wins = 0;
 let losses = 0;
 let total = 0;
 
-let winStreak = 0;
+let recoveryMode = false;
+let stabilizeWin = false;
+
 let log = [];
 
 // ================= LADDER =================
@@ -147,12 +149,10 @@ return ladder[Math.min(step, ladder.length - 1)];
 // ================= UPDATE =================
 function update(){
 
-balance = Number(document.getElementById("startBal").value);
-
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
 document.getElementById("step").innerText = step;
-document.getElementById("wstreak").innerText = winStreak;
+document.getElementById("mode").innerText = recoveryMode ? "RECOVERY" : "NORMAL";
 
 document.getElementById("total").innerText = total;
 document.getElementById("wins").innerText = wins;
@@ -189,12 +189,29 @@ log.push({res:"WIN", trade, ret});
 wins++;
 total++;
 
-// 🔥 2 WIN RESET SYSTEM
-winStreak++;
+// detect recovery mode
+if(step >= 3){
+recoveryMode = true;
+}
 
-if(winStreak >= 2){
-step = 0;
-winStreak = 0;
+// WIN LOGIC
+if(recoveryMode){
+
+// step down first
+step = Math.max(0, step - 1);
+
+// if reached base level
+if(step === 0){
+stabilizeWin = true;
+}
+
+if(stabilizeWin && step === 0){
+recoveryMode = false;
+stabilizeWin = false;
+}
+
+} else {
+step = Math.max(0, step - 1);
 }
 
 update();
@@ -210,7 +227,10 @@ balance -= trade;
 log.push({res:"LOSS", trade, ret:0});
 
 step++;
-winStreak = 0;
+
+if(step >= 3){
+recoveryMode = true;
+}
 
 losses++;
 total++;
@@ -221,24 +241,26 @@ update();
 // ================= RESET =================
 function resetTrade(){
 step = 0;
-winStreak = 0;
+recoveryMode = false;
+stabilizeWin = false;
 update();
 }
 
 // ================= NEW SESSION =================
 function newSession(){
 step = 0;
-winStreak = 0;
+recoveryMode = false;
+stabilizeWin = false;
 
 wins = 0;
 losses = 0;
 total = 0;
 log = [];
-
 update();
 }
 
 // ================= INIT =================
+balance = Number(document.getElementById("startBal").value);
 update();
 
 </script>
