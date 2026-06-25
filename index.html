@@ -2,89 +2,40 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Warriors Locked System</title>
+<title>Recovery Cycle System</title>
 
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:#0b1220;
-color:white;
-}
-
-.header{
-background:#123a7a;
-padding:14px;
-text-align:center;
-font-weight:bold;
-}
-
-.card{
-background:#111a2e;
-margin:10px;
-padding:12px;
-border-radius:10px;
-}
-
-input{
-width:100%;
-padding:8px;
-margin-top:5px;
-border-radius:6px;
-border:none;
-font-size:14px;
-}
-
-button{
-width:100%;
-padding:10px;
-margin-top:6px;
-border:none;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.win{background:#39d353;}
-.loss{background:#dc2626;color:white;}
-.apply{background:#16a34a;color:white;}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-font-size:12px;
-}
-
-th,td{
-border:1px solid #222c44;
-padding:5px;
-text-align:center;
-}
+body{margin:0;font-family:Arial;background:#0b1220;color:white}
+.header{background:#123a7a;padding:14px;text-align:center;font-weight:bold}
+.card{background:#111a2e;margin:10px;padding:12px;border-radius:10px}
+input{width:100%;padding:8px;margin-top:5px;border-radius:6px;border:none}
+button{width:100%;padding:10px;margin-top:6px;border:none;border-radius:6px;font-weight:bold;cursor:pointer}
+.win{background:#39d353}
+.loss{background:#dc2626;color:white}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+th,td{border:1px solid #222c44;padding:5px;text-align:center}
 </style>
 </head>
 
 <body>
 
-<div class="header">WEALTH WARRIORS TRADE MANAGER (LOCKED)</div>
+<div class="header">WEALTH WARRIORS RECOVERY CYCLE</div>
 
 <div class="card">
-
 Starting Balance
 <input id="startBal" type="number" value="85">
 
 Base Trade
 <input id="baseTrade" type="number" value="2.8">
 
-<button class="apply" onclick="applySettings()">APPLY SETTINGS</button>
-
+<button onclick="apply()">APPLY</button>
 </div>
 
 <div class="card">
-Balance: <b id="bal">$0.00</b><br>
-Next Trade: <b id="trd">$0.00</b><br>
-Step: <b id="step">0</b><br>
-Win Cycle: <b id="cycle">0</b>
+Balance: <b id="bal"></b><br>
+Trade: <b id="trd"></b><br>
+Step: <b id="step"></b><br>
+Wins: <b id="wins"></b>
 </div>
 
 <div class="card">
@@ -92,7 +43,6 @@ Win Cycle: <b id="cycle">0</b>
 <button class="loss" onclick="loss()">LOSS</button>
 </div>
 
-<div class="card">
 <table>
 <thead>
 <tr>
@@ -102,117 +52,93 @@ Win Cycle: <b id="cycle">0</b>
 <th>Return</th>
 </tr>
 </thead>
-<tbody id="table"></tbody>
+<tbody id="log"></tbody>
 </table>
-</div>
 
 <script>
 
-// ================= STATE =================
-let balance = 0;
-let step = 0;
-let cycle = 0;
+let balance=0;
+let step=0;
+let wins=0;
+let base=2.8;
+let ladder=[];
+let history=[];
 
-let base = 2.8;
-let ladder = [];
-let log = [];
-let total = 0;
-
-// ================= APPLY SETTINGS =================
-function applySettings(){
+function apply(){
 
 base = Number(document.getElementById("baseTrade").value);
 balance = Number(document.getElementById("startBal").value);
 
-// LADDER (FIXED STRUCTURE)
-ladder = [
+ladder=[
 base,
-base * 1.55,
-base * 2.34,
-base * 3.5,
-base * 5.25,
-base * 7.87
+base*1.55,
+base*2.34,
+base*3.5,
+base*5.25,
+base*7.87
 ];
 
-step = 0;
-cycle = 0;
-log = [];
-total = 0;
+step=0;
+wins=0;
+history=[];
 
 update();
 }
 
-// ================= GET TRADE =================
-function getTrade(){
-return ladder[Math.min(step, ladder.length - 1)];
+function trade(){
+return ladder[Math.min(step, ladder.length-1)];
 }
 
-// ================= LOSS =================
 function loss(){
+balance -= trade();
+step = Math.min(step+1, ladder.length-1);
+wins=0;
 
-let trade = getTrade();
-balance -= trade;
-
-// move up risk
-step = Math.min(step + 1, ladder.length - 1);
-
-// reset win cycle
-cycle = 0;
-
-log.push({res:"LOSS", trade, ret:0});
-total++;
-
+history.push({r:"LOSS",t:trade(),ret:0});
 update();
 }
 
-// ================= WIN =================
 function win(){
 
-let trade = getTrade();
+let t = trade();
+balance += t*0.92;
 
-// 🔥 FORCE CHECK FIRST (CRITICAL FIX)
-cycle = cycle + 1;
+wins++;
 
-// calculate return AFTER cycle update
-let ret = trade * 0.92;
-balance += ret;
+history.push({r:"WIN",t:t,ret:t*0.92});
 
-// 🔥 HARD OVERRIDE RULE
-if(cycle >= 3){
-step = 0;
-cycle = 0;   // RESET EVERYTHING
+// 🔥 KEY RULE
+if(wins>=2){
+step=0;      // RESET TO BASE
+wins=0;
 }
 else{
-step = Math.max(0, step - 1);
+step=Math.max(0,step-1);
 }
-
-log.push({res:"WIN", trade, ret});
-total++;
 
 update();
 }
 
-// ================= UPDATE UI =================
 function update(){
 
-document.getElementById("bal").innerText = "$" + balance.toFixed(2);
-document.getElementById("trd").innerText = "$" + getTrade().toFixed(2);
-document.getElementById("step").innerText = step;
-document.getElementById("cycle").innerText = cycle;
+document.getElementById("bal").innerText="$"+balance.toFixed(2);
+document.getElementById("trd").innerText="$"+trade().toFixed(2);
+document.getElementById("step").innerText=step;
+document.getElementById("wins").innerText=wins;
 
-let html = "";
+let html="";
 
-log.forEach((x,i)=>{
-html += `
+history.forEach((x,i)=>{
+html+=`
 <tr>
 <td>${i+1}</td>
-<td>${x.res}</td>
-<td>$${x.trade.toFixed(2)}</td>
+<td>${x.r}</td>
+<td>$${x.t.toFixed(2)}</td>
 <td>$${x.ret.toFixed(2)}</td>
 </tr>`;
 });
 
-document.getElementById("table").innerHTML = html;
+document.getElementById("log").innerHTML=html;
 }
 
 update();
