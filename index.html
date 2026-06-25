@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth State Machine PRO</title>
+<title>Wealth State Machine FINAL</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1220;color:white}
@@ -19,7 +19,7 @@ th,td{border:1px solid #222c44;padding:5px;text-align:center}
 
 <body>
 
-<div class="header">WEALTH STATE MACHINE PRO (TIMING FIXED)</div>
+<div class="header">WEALTH STATE MACHINE FINAL ENGINE</div>
 
 <div class="card">
 Starting Balance
@@ -73,7 +73,7 @@ let base = 2.8;
 let ladder = [];
 let history = [];
 
-// ================= APPLY =================
+// ================= INIT =================
 function apply(){
 
 base = Number(document.getElementById("baseTrade").value);
@@ -99,29 +99,30 @@ history = [];
 render();
 }
 
-// ================= TRADE =================
+// ================= GET TRADE =================
 function getTrade(){
 return ladder[Math.min(STATE.step, ladder.length-1)];
 }
 
-// ================= LOSS =================
+// ================= LOSS (CLEAN STATE MACHINE) =================
 function loss(){
 
 if(STATE.locked) return;
 STATE.locked = true;
 
+// update loss state FIRST
 STATE.lossStreak++;
+STATE.wins = 0;
 
-if(STATE.lossStreak >= 5){
-STATE.mode = "DEEP";
-}
+// mode decision BEFORE anything else
+STATE.mode = (STATE.lossStreak >= 5) ? "DEEP" : "NORMAL";
 
+// execute trade
 const t = getTrade();
 balance -= t;
 
+// step update AFTER mode lock
 STATE.step = Math.min(STATE.step + 1, ladder.length - 1);
-
-STATE.wins = 0;
 
 history.push({r:"LOSS", t, ret:0});
 
@@ -129,7 +130,7 @@ STATE.locked = false;
 render();
 }
 
-// ================= WIN (FIXED TIMING) =================
+// ================= WIN (CLEAN STATE MACHINE) =================
 function win(){
 
 if(STATE.locked) return;
@@ -142,6 +143,9 @@ balance += ret;
 STATE.wins++;
 
 history.push({r:"WIN", t, ret});
+
+// update mode safely
+STATE.mode = (STATE.lossStreak >= 5) ? "DEEP" : "NORMAL";
 
 // ================= NORMAL MODE =================
 if(STATE.mode === "NORMAL"){
@@ -156,36 +160,28 @@ STATE.step = Math.max(0, STATE.step - 1);
 
 }
 
-// ================= DEEP MODE (FIXED STEP TIMING) =================
-else{
+// ================= DEEP MODE =================
 
-// WIN 1 → force top immediately
-if(STATE.wins === 1){
+// WIN 1 → 22.04
+if(STATE.mode === "DEEP" && STATE.wins === 1){
 STATE.step = 5;
 }
 
-// WIN 2 → immediately step down
-else if(STATE.wins === 2){
+// WIN 2 → 14.70
+else if(STATE.mode === "DEEP" && STATE.wins === 2){
 STATE.step = 4;
 }
 
-// WIN 3 → step down then reset
-else if(STATE.wins === 3){
-STATE.step = 2;
-
-// RESET ALL
+// WIN 3 → 6.55 → RESET
+else if(STATE.mode === "DEEP" && STATE.wins >= 3){
 STATE.step = 0;
 STATE.wins = 0;
 STATE.lossStreak = 0;
 STATE.mode = "NORMAL";
 }
 
-}
-
-// IMPORTANT: force UI sync AFTER state change
-render();
-
 STATE.locked = false;
+render();
 }
 
 // ================= UI =================
