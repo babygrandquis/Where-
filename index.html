@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealth Ladder Locked</title>
+<title>Exact Recovery Engine</title>
 
 <style>
 body{
@@ -64,24 +64,18 @@ text-align:center;
 
 <body>
 
-<div class="header">WEALTH LADDER SYSTEM (FIXED PATH)</div>
+<div class="header">WEALTH WARRIORS EXACT ENGINE</div>
 
 <div class="card">
-
 Starting Balance
 <input id="startBal" type="number" value="85">
-
-Base Trade
-<input id="baseTrade" type="number" value="2.8">
-
 <button onclick="apply()">APPLY</button>
-
 </div>
 
 <div class="card">
 Balance: <b id="bal"></b><br>
 Trade: <b id="trd"></b><br>
-Index: <b id="idx"></b>
+State: <b id="state"></b>
 </div>
 
 <div class="card">
@@ -103,58 +97,49 @@ Index: <b id="idx"></b>
 
 <script>
 
-let balance = 0;
-let index = 0;
-
-let ladder = [];
-let history = [];
-
-function apply(){
-
-let base = Number(document.getElementById("baseTrade").value);
-balance = Number(document.getElementById("startBal").value);
-
-// FIXED LADDER (NOT CALCULATED EVERY TIME)
-ladder = [
-base,
-base * 1.55,
-base * 2.34,
-base * 3.5,
-base * 5.25,
-base * 7.87,
-base * 7.87 * 1.4,   // 22.04 peak level
-base * 7.87,
-base * 5.25,
-base * 3.5,
-base * 2.34,
-base * 1.55,
-base
+// ================= LADDER =================
+const ladder = [
+2.80,
+4.34,
+6.55,
+9.80,
+14.70,
+22.04
 ];
 
-index = 0;
-history = [];
+// ================= STATE INDEX =================
+let pos = 0;
+let balance = 0;
+let log = [];
 
+// ================= APPLY =================
+function apply(){
+balance = Number(document.getElementById("startBal").value);
+pos = 0;
+log = [];
 update();
 }
 
+// ================= CURRENT TRADE =================
 function trade(){
-return ladder[index];
+return ladder[pos];
 }
 
+// ================= LOSS (NORMAL UP) =================
 function loss(){
 
 let t = trade();
 balance -= t;
 
-if(index < ladder.length - 1){
-index++;
-}
+// move UP normally
+pos = Math.min(pos + 1, ladder.length - 1);
 
-history.push({r:"LOSS", t:t, ret:0});
+log.push({r:"LOSS", t:t, ret:0});
 
 update();
 }
 
+// ================= WIN (FORCED TRANSITION MAP) =================
 function win(){
 
 let t = trade();
@@ -162,25 +147,36 @@ let ret = t * 0.92;
 
 balance += ret;
 
-if(index > 0){
-index--;
+// 🔥 EXACT WIN PATH YOU WANT
+if(pos === 5){
+pos = 4;   // 22.04 → 14.70
+}
+else if(pos === 4){
+pos = 2;   // 14.70 → 6.55 (skip 9.80)
+}
+else if(pos === 2){
+pos = 0;   // 6.55 → 2.80
+}
+else{
+pos = Math.max(pos - 1, 0);
 }
 
-history.push({r:"WIN", t:t, ret:ret});
+log.push({r:"WIN", t:t, ret:ret});
 
 update();
 }
 
+// ================= UPDATE =================
 function update(){
 
 document.getElementById("bal").innerText = "$" + balance.toFixed(2);
 document.getElementById("trd").innerText = "$" + trade().toFixed(2);
-document.getElementById("idx").innerText = index;
+document.getElementById("state").innerText = pos;
 
-let html = "";
+let html="";
 
-history.forEach((x,i)=>{
-html += `
+log.forEach((x,i)=>{
+html+=`
 <tr>
 <td>${i+1}</td>
 <td>${x.r}</td>
@@ -189,7 +185,7 @@ html += `
 </tr>`;
 });
 
-document.getElementById("log").innerHTML = html;
+document.getElementById("log").innerHTML=html;
 }
 
 update();
