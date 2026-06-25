@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>State Machine Recovery System</title>
+<title>Wealth State Machine PRO</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1220;color:white}
@@ -19,7 +19,7 @@ th,td{border:1px solid #222c44;padding:5px;text-align:center}
 
 <body>
 
-<div class="header">WEALTH STATE MACHINE (BULLETPROOF)</div>
+<div class="header">WEALTH STATE MACHINE PRO (FIXED DEEP START)</div>
 
 <div class="card">
 Starting Balance
@@ -59,7 +59,7 @@ Loss Streak: <b id="loss"></b>
 
 <script>
 
-// ================= STATE MACHINE =================
+// ================= STATE =================
 const STATE = {
 mode: "NORMAL",
 step: 0,
@@ -73,7 +73,7 @@ let base = 2.8;
 let ladder = [];
 let history = [];
 
-// ================= INIT =================
+// ================= APPLY =================
 function apply(){
 
 base = Number(document.getElementById("baseTrade").value);
@@ -88,10 +88,10 @@ base*5.25,
 base*7.87
 ];
 
+STATE.mode = "NORMAL";
 STATE.step = 0;
 STATE.wins = 0;
 STATE.lossStreak = 0;
-STATE.mode = "NORMAL";
 STATE.locked = false;
 
 history = [];
@@ -99,22 +99,32 @@ history = [];
 render();
 }
 
-// ================= ATOMIC TRADE =================
+// ================= TRADE =================
 function getTrade(){
 return ladder[Math.min(STATE.step, ladder.length-1)];
 }
 
-// ================= LOSS =================
+// ================= LOSS (FIXED ORDER - CRITICAL) =================
 function loss(){
 
 if(STATE.locked) return;
 STATE.locked = true;
 
+// STEP 1: increment loss FIRST
+STATE.lossStreak++;
+
+// STEP 2: check deep mode IMMEDIATELY
+if(STATE.lossStreak >= 5){
+STATE.mode = "DEEP";
+}
+
+// STEP 3: take trade AFTER mode is correct
 const t = getTrade();
 balance -= t;
 
-STATE.step = Math.min(STATE.step + 1, ladder.length-1);
-STATE.lossStreak++;
+// STEP 4: move step AFTER execution
+STATE.step = Math.min(STATE.step + 1, ladder.length - 1);
+
 STATE.wins = 0;
 
 history.push({r:"LOSS", t, ret:0});
@@ -137,13 +147,6 @@ STATE.wins++;
 
 history.push({r:"WIN", t, ret});
 
-// ================= MODE SWITCH =================
-if(STATE.lossStreak >= 5){
-STATE.mode = "DEEP";
-} else {
-STATE.mode = "NORMAL";
-}
-
 // ================= NORMAL MODE =================
 if(STATE.mode === "NORMAL"){
 
@@ -160,8 +163,7 @@ STATE.step = Math.max(0, STATE.step - 1);
 // ================= DEEP MODE =================
 else{
 
-// FIXED STATE FLOW
-const deepPath = [5, 4, 2];
+const deepPath = [5,4,2]; // 22.04 → 14.70 → 6.55
 
 const idx = STATE.wins - 1;
 
