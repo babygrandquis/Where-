@@ -1,196 +1,437 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Exact Recovery Engine</title>
 
-<style>
-body{
-margin:0;
-font-family:Arial;
-background:#0b1220;
-color:white;
-}
+<title>Wealth Warriors Trade Manager</title>
 
-.header{
-background:#123a7a;
-padding:14px;
-text-align:center;
-font-weight:bold;
-}
+<link rel="stylesheet" href="style.css">
 
-.card{
-background:#111a2e;
-margin:10px;
-padding:12px;
-border-radius:10px;
-}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-input{
-width:100%;
-padding:8px;
-margin-top:5px;
-border-radius:6px;
-border:none;
-}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-button{
-width:100%;
-padding:10px;
-margin-top:6px;
-border:none;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.win{background:#39d353;}
-.loss{background:#dc2626;color:white;}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-font-size:12px;
-}
-
-th,td{
-border:1px solid #222c44;
-padding:5px;
-text-align:center;
-}
-</style>
 </head>
 
 <body>
 
-<div class="header">WEALTH WARRIORS EXACT ENGINE</div>
+<div class="background-overlay"></div>
 
-<div class="card">
-Starting Balance
-<input id="startBal" type="number" value="85">
-<button onclick="apply()">APPLY</button>
+<header>
+
+<h1>WEALTH WARRIORS</h1>
+
+<h2>Luxury Recovery Trade Manager</h2>
+
+</header>
+
+<div class="dashboard">
+
+<!-- LEFT PANEL -->
+
+<div class="panel left-panel">
+
+<h3>ACCOUNT</h3>
+
+<div class="stat">
+
+<span>Initial Balance</span>
+
+<span id="initialBalance">$85.00</span>
+
 </div>
 
-<div class="card">
-Balance: <b id="bal"></b><br>
-Trade: <b id="trd"></b><br>
-State: <b id="state"></b>
+<div class="stat">
+
+<span>Current Balance</span>
+
+<span id="currentBalance">$85.00</span>
+
 </div>
 
-<div class="card">
-<button class="win" onclick="win()">WIN</button>
-<button class="loss" onclick="loss()">LOSS</button>
+<div class="stat">
+
+<span>Base Trade</span>
+
+<span id="baseTrade">$2.80</span>
+
 </div>
+
+<div class="stat">
+
+<span>Current Trade</span>
+
+<span id="currentTrade">$2.80</span>
+
+</div>
+
+<div class="stat">
+
+<span>Total Trades</span>
+
+<span id="totalTrades">0</span>
+
+</div>
+
+<div class="stat">
+
+<span>Wins</span>
+
+<span id="wins">0</span>
+
+</div>
+
+<div class="stat">
+
+<span>Losses</span>
+
+<span id="losses">0</span>
+
+</div>
+
+<div class="stat">
+
+<span>Win Rate</span>
+
+<span id="winRate">0%</span>
+
+</div>
+
+<div class="stat">
+
+<span>Payout</span>
+
+<span id="payout">92%</span>
+
+</div>
+
+<div class="stat">
+
+<span>Recovery Stage</span>
+
+<span id="recoveryStage">Normal</span>
+
+</div>
+
+<div class="stat">
+
+<span>Net Profit</span>
+
+<span id="netProfit">$0.00</span>
+
+</div>
+
+</div>
+
+<!-- CENTER -->
+
+<div class="panel center-panel">
 
 <table>
+
 <thead>
+
 <tr>
-<th>No</th>
+
+<th>No.</th>
+
 <th>Result</th>
+
 <th>Trade</th>
+
 <th>Return</th>
+
+<th>Balance</th>
+
+<th>Status</th>
+
 </tr>
+
 </thead>
-<tbody id="log"></tbody>
+
+<tbody id="tradeLog">
+
+</tbody>
+
 </table>
 
-<script>
+</div>
 
-// ================= LADDER =================
-const ladder = [
-2.80,
-4.34,
-6.55,
-9.80,
-14.70,
-22.04
-];
+<!-- RIGHT -->
 
-// ================= STATE INDEX =================
-let pos = 0;
-let balance = 0;
-let log = [];
+<div class="panel right-panel">
 
-// ================= APPLY =================
-function apply(){
-balance = Number(document.getElementById("startBal").value);
-pos = 0;
-log = [];
-update();
-}
+<h3>DAILY TARGET</h3>
 
-// ================= CURRENT TRADE =================
-function trade(){
-return ladder[pos];
-}
+<div class="target-card">
 
-// ================= LOSS (NORMAL UP) =================
-function loss(){
+<div>
 
-let t = trade();
-balance -= t;
+<label>Profit Target</label>
 
-// move UP normally
-pos = Math.min(pos + 1, ladder.length - 1);
+<h2 id="profitTarget">$50</h2>
 
-log.push({r:"LOSS", t:t, ret:0});
+</div>
 
-update();
-}
+<div>
 
-// ================= WIN (FORCED TRANSITION MAP) =================
-function win(){
+<label>Trades Required</label>
 
-let t = trade();
-let ret = t * 0.92;
+<h2 id="tradesRequired">18</h2>
 
-balance += ret;
+</div>
 
-// 🔥 EXACT WIN PATH YOU WANT
-if(pos === 5){
-pos = 4;   // 22.04 → 14.70
-}
-else if(pos === 4){
-pos = 2;   // 14.70 → 6.55 (skip 9.80)
-}
-else if(pos === 2){
-pos = 0;   // 6.55 → 2.80
-}
-else{
-pos = Math.max(pos - 1, 0);
-}
+<div>
 
-log.push({r:"WIN", t:t, ret:ret});
+<label>Account Gain</label>
 
-update();
-}
+<h2 id="accountGain">0%</h2>
 
-// ================= UPDATE =================
-function update(){
+</div>
 
-document.getElementById("bal").innerText = "$" + balance.toFixed(2);
-document.getElementById("trd").innerText = "$" + trade().toFixed(2);
-document.getElementById("state").innerText = pos;
+</div>
 
-let html="";
+<h3>SESSION PERFORMANCE</h3>
 
-log.forEach((x,i)=>{
-html+=`
-<tr>
-<td>${i+1}</td>
-<td>${x.r}</td>
-<td>$${x.t.toFixed(2)}</td>
-<td>$${x.ret.toFixed(2)}</td>
-</tr>`;
-});
+<div class="performance">
 
-document.getElementById("log").innerHTML=html;
-}
+<div>
 
-update();
+<h1 id="performanceWins">0</h1>
 
-</script>
+<p>Wins</p>
+
+</div>
+
+<div>
+
+<h1 id="performanceLosses">0</h1>
+
+<p>Losses</p>
+
+</div>
+
+</div>
+
+<h3>RECOVERY ENGINE</h3>
+
+<div class="engineStatus">
+
+<span id="engineMode">
+
+READY
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- CONTROLS -->
+
+<div class="controls">
+
+<div class="input-group">
+
+<label>Starting Balance</label>
+
+<input
+type="number"
+id="balanceInput"
+value="85">
+
+<button id="applyBalance">
+
+Apply
+
+</button>
+
+</div>
+
+<div class="input-group">
+
+<label>Base Trade</label>
+
+<input
+type="number"
+id="baseTradeInput"
+value="2.80">
+
+<button id="applyTrade">
+
+Apply
+
+</button>
+
+</div>
+
+</div>
+
+<!-- ACTION BUTTONS -->
+
+<div class="action-buttons">
+
+<button id="winButton">
+
+WIN
+
+</button>
+
+<button id="lossButton">
+
+LOSS
+
+</button>
+
+<button id="newSession">
+
+NEW SESSION
+
+</button>
+
+<button id="resetSession">
+
+RESET
+
+</button>
+
+<button id="exportSession">
+
+EXPORT
+
+</button>
+
+</div>
+
+<!-- BOTTOM -->
+
+<div class="bottom-grid">
+
+<div class="panel">
+
+<h3>SESSION</h3>
+
+<h1 id="sessionCounter">
+
+1
+
+</h1>
+
+</div>
+
+<div class="panel">
+
+<h3>GOALS</h3>
+
+<div class="goal">
+
+<span>Profit Target</span>
+
+<span id="goalProfit">$50</span>
+
+</div>
+
+<div class="goal">
+
+<span>Trades Required</span>
+
+<span id="goalTrades">
+
+18
+
+</span>
+
+</div>
+
+<div class="goal">
+
+<span>Capital Goal</span>
+
+<span id="capitalGoal">
+
+$135
+
+</span>
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<h3>AUTOMATION</h3>
+
+<div class="toggle">
+
+<label>
+
+<input type="checkbox" checked>
+
+Recovery Engine
+
+</label>
+
+</div>
+
+<div class="toggle">
+
+<label>
+
+<input type="checkbox" checked>
+
+Auto Save
+
+</label>
+
+</div>
+
+<div class="toggle">
+
+<label>
+
+<input type="checkbox" checked>
+
+Auto Balance
+
+</label>
+
+</div>
+
+<div class="toggle">
+
+<label>
+
+<input type="checkbox" checked>
+
+Auto Log
+
+</label>
+
+</div>
+
+<div class="toggle">
+
+<label>
+
+<input type="checkbox" checked>
+
+Notifications
+
+</label>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="script.js"></script>
 
 </body>
+
 </html>
